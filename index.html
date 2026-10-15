@@ -52,6 +52,8 @@
 </div>
 <div id="toast" class="toast hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"}</script>
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const chat=$('#chatlog'), promptBox=$('#prompt'), welcome=$('#welcome'), fileList=$('#filelist'), activity=$('#activity');
@@ -68,6 +70,18 @@ async function readFile(f){
  if(f.size>15*1024*1024) return {status:'Demasiado grande (máximo 15 MB)',preview:''};
  const ext=f.name.split('.').pop().toLowerCase();
  try{
+  if(ext==='pdf'){
+   if(!window.pdfjsLib) return {status:'No se pudo cargar el lector PDF; revisa la conexión a internet',preview:''};
+   const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+   const pages=[];
+   for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const content=await page.getTextContent();
+    pages.push('PÁGINA '+p+'\\n'+content.items.map(x=>x.str).join(' '));
+   }
+   const text=pages.join('\\n\\n');
+   return {status:'Leído · PDF de '+pdf.numPages+' página(s)',preview:text||'No se encontró texto seleccionable. Si el PDF es un escaneo, necesita OCR.'};
+  }
   if(['xlsx','xls','xlsm','ods'].includes(ext)){
    if(!window.XLSX) return {status:'No se pudo cargar el lector de Excel; revisa la conexión a internet',preview:''};
    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
