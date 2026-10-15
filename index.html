@@ -47,10 +47,11 @@
 <div class="panelhead"><span>Actividad</span><span class="pill" id="activityCount">0</span></div>
 <div class="activity" id="activity"><div class="empty">Las acciones de esta sesión aparecerán aquí.</div></div>
 <div class="panelhead"><span>Estado del prototipo</span></div>
-<div class="notice">La interfaz funciona en tu navegador. Las respuestas son demostrativas; todavía no se conecta a ningún modelo de IA, GitHub ni terminal. No sube los archivos que selecciones.</div>
+<div class="notice">Los archivos se leen localmente en tu navegador para extraer texto y hojas de cálculo. Aún no se envían a una IA ni se suben a un servidor.</div>
 </aside>
 </div>
 <div id="toast" class="toast hidden"></div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const chat=$('#chatlog'), promptBox=$('#prompt'), welcome=$('#welcome'), fileList=$('#filelist'), activity=$('#activity');
@@ -62,8 +63,35 @@ function addMessage(role,text){welcome.classList.add('hidden');const row=documen
 function responseFor(text){const t=text.toLowerCase();if(t.includes('archivo')||t.includes('proyecto')||t.includes('estructura'))return 'Para analizar un proyecto real, adjunta los archivos relevantes usando “Adjuntar archivos”. En esta versión puedo registrar sus nombres y mostrar el contexto seleccionado, pero aún no envío el contenido a un modelo de IA.\n\nPlan sugerido:\n1. Identificar el punto de entrada y las dependencias.\n2. Mapear los módulos principales.\n3. Definir la tarea y sus criterios de aceptación.\n4. Proponer cambios pequeños y revisables.\n5. Preparar pruebas antes de aplicar modificaciones.';if(t.includes('error')||t.includes('revisa')||t.includes('bug'))return 'Modo de revisión preparado. Para una revisión real necesitamos conectar un modelo de IA y facilitar el código.\n\nCuando se conecte, el flujo será: reproducir el problema → localizar la causa → proponer un parche → revisar el diff → ejecutar pruebas con autorización. Por ahora no se ha inspeccionado ni modificado ningún archivo.';if(t.includes('prueba'))return 'Plan de pruebas inicial:\n1. Caso normal: entrada válida y resultado esperado.\n2. Límites: valores vacíos, tamaños máximos y caracteres especiales.\n3. Errores: dependencia no disponible, permisos insuficientes y tiempos de espera.\n4. Regresión: verificar que el comportamiento anterior siga funcionando.\n5. Evidencia: registrar resultado, pasos y versión.\n\nEste es un ejemplo demostrativo; aún no se ejecutan pruebas.';if(t.includes('plan')||t.includes('funcionalidad'))return 'Plan de implementación sugerido:\n1. Aclarar el comportamiento esperado.\n2. Identificar archivos y dependencias afectadas.\n3. Proponer una solución mínima.\n4. Mostrar un diff para revisión.\n5. Validar con pruebas y documentar resultados.\n\nNota: las modificaciones reales requieren conectar el repositorio y un agente de IA.';return 'He registrado tu solicitud en la sesión de demostración. Para convertirla en una tarea de programación real, el siguiente paso es conectar un proveedor de IA y una fuente de código autorizada.\n\nNo se ha ejecutado código, no se ha conectado a internet y no se han modificado archivos.'}
 function send(){const text=promptBox.value.trim();if(!text)return;addMessage('user',text);promptBox.value='';taskCount++;$('#recent').innerHTML='<button>'+esc(text.slice(0,32))+'</button>'+$('#recent').innerHTML;logActivity('Solicitud registrada');const row=addMessage('assistant','');const b=row.querySelector('.bubble');b.textContent='Preparando respuesta de demostración…';setTimeout(()=>{b.textContent=responseFor(text);logActivity('Respuesta de demostración generada');},400)}
 function reset(){chat.innerHTML='';welcome.classList.remove('hidden');promptBox.value='';logActivity('Sesión reiniciada');toast('Sesión reiniciada')}
-function renderFiles(){fileList.innerHTML=files.length?files.map((f,i)=>'<div class="file"><span>▧</span><span style="flex:1">'+esc(f.name)+'</span><button data-remove="'+i+'" title="Quitar archivo" style="background:none;border:0;color:#aaa">×</button></div>').join(''):'<div class="empty">Adjunta archivos para añadir contexto a esta sesión.</div>';fileList.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{files.splice(+b.dataset.remove,1);renderFiles();logActivity('Archivo quitado del contexto')})}
-function addFiles(list){for(const f of list){if(!files.some(x=>x.name===f.name&&x.size===f.size)){files.push({name:f.name,size:f.size,type:f.type});logActivity('Archivo añadido: '+f.name)}}renderFiles();if(list.length)toast('Archivos añadidos al contexto visual');}
+function renderFiles(){fileList.innerHTML=files.length?files.map((f,i)=>'<div class="file"><span>▧</span><span style="flex:1;min-width:0"><b>'+esc(f.name)+'</b><br><small>'+esc(f.status||'Preparando lectura…')+'</small></span><button data-remove="'+i+'" title="Quitar archivo" style="background:none;border:0;color:#aaa">×</button></div>'+(f.preview?'<details style="margin:0 7px 8px;color:#aeb1bb;font-size:11px"><summary>Vista previa del contenido</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow:auto;background:#101114;padding:8px;border-radius:6px">'+esc(f.preview.slice(0,5000))+'</pre></details>':'')).join(''):'<div class="empty">Adjunta archivos para añadir contexto a esta sesión.</div>';fileList.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{files.splice(+b.dataset.remove,1);renderFiles();logActivity('Archivo quitado del contexto')})}
+async function readFile(f){
+ if(f.size>15*1024*1024) return {status:'Demasiado grande (máximo 15 MB)',preview:''};
+ const ext=f.name.split('.').pop().toLowerCase();
+ try{
+  if(['xlsx','xls','xlsm','ods'].includes(ext)){
+   if(!window.XLSX) return {status:'No se pudo cargar el lector de Excel; revisa la conexión a internet',preview:''};
+   const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+   const parts=wb.SheetNames.map(n=>'HOJA: '+n+'\n'+XLSX.utils.sheet_to_csv(wb.Sheets[n])).join('\n\n');
+   return {status:'Leído · '+wb.SheetNames.length+' hoja(s)',preview:parts};
+  }
+  if(['txt','md','csv','json','js','jsx','ts','tsx','html','css','py','java','sql','xml','yml','yaml','log','sh','toml'].includes(ext)||f.type.startsWith('text/')){
+   return {status:'Leído · texto extraído',preview:await f.text()};
+  }
+  return {status:'Adjunto, pero este formato aún no se puede leer',preview:''};
+ }catch(e){return {status:'Error al leer el archivo',preview:''}}
+}
+async function addFiles(list){
+ let added=0;
+ for(const f of list){
+  if(files.some(x=>x.name===f.name&&x.size===f.size)) continue;
+  const item={name:f.name,size:f.size,type:f.type,status:'Leyendo archivo…',preview:''};
+  files.push(item);added++;renderFiles();
+  Object.assign(item,await readFile(f));
+  logActivity((item.preview?'Contenido leído: ':'Archivo añadido: ')+f.name);
+  renderFiles();
+ }
+ if(added)toast('Archivos añadidos; revisa su vista previa');
+}
 $('#sendBtn').onclick=send;promptBox.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});$('#newTask').onclick=reset;$('#clearBtn').onclick=reset;$('#attachBtn').onclick=()=>$('#fileInput').click();$('#uploadTop').onclick=()=>$('#fileInput').click();$('#browseBtn').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=e=>{addFiles(e.target.files);e.target.value=''};$$('.suggestion').forEach(b=>b.onclick=()=>{promptBox.value=b.dataset.prompt;promptBox.focus()});$('#planBtn').onclick=()=>{promptBox.value='Crea un plan de implementación con pasos, riesgos y criterios de aceptación para: ';promptBox.focus()};$('#filesNav').onclick=()=>{$('#dropzone').scrollIntoView({behavior:'smooth',block:'center'});toast('Añade archivos al contexto')};$('#reviewNav').onclick=()=>{promptBox.value='Prepara una revisión de código. Indica los archivos y criterios que debemos revisar.';promptBox.focus()};const dz=$('#dropzone');['dragenter','dragover'].forEach(e=>dz.addEventListener(e,x=>{x.preventDefault();dz.style.borderColor='var(--accent)'}));['dragleave','drop'].forEach(e=>dz.addEventListener(e,x=>{x.preventDefault();dz.style.borderColor='';if(e==='drop')addFiles(x.dataTransfer.files)}));logActivity('Espacio de trabajo iniciado');
 </script>
 </body></html>
