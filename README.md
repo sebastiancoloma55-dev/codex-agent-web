@@ -13,7 +13,8 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 - Proyectos de trabajo, memoria editable por usuario y exportación de respaldo guardados localmente en el navegador.
 - Acceso privado de contraseña única con sesión firmada, cookie segura y protección del endpoint de chat; todavía no hay cuentas individuales ni roles.
 - Límite inicial de intentos de acceso en memoria del proceso (protección básica, no rate limiting distribuido).
-- Sin ejecución de herramientas ni integración GitHub activa todavía.
+- Endpoint privado `/api/permissions` y panel de capacidades: consultas, lectura de adjuntos e historial local permitidos; escritura de archivos, ejecución, GitHub, despliegues y gestión de secretos bloqueados.
+- Sin ejecución de herramientas ni integración GitHub activa todavía. El panel de permisos describe la política objetivo; no hay herramientas de escritura o ejecución expuestas para conceder.
 - No se ha creado un despliegue de Vercel ni se han activado servicios de pago.
 
 ## Desarrollo local
