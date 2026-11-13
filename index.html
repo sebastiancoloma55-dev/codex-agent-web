@@ -30,6 +30,18 @@
 .auth-foot{font-size:11px;color:#858894;margin-top:15px}
 .auth-logout{margin-top:auto;border:1px solid var(--line);background:transparent;color:#c5c7cf;padding:8px 10px;border-radius:8px;text-align:left}
 
+
+.permission-list{display:flex;flex-direction:column;gap:10px}
+.permission-row{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid var(--line)}
+.permission-row:last-child{border-bottom:0}
+.permission-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;margin-top:5px;background:#d68a8a}
+.permission-dot.allowed{background:#a8d96d}
+.permission-copy{min-width:0;flex:1}
+.permission-copy b{display:block;font-size:12px;font-weight:650;color:#e6e7eb}
+.permission-copy small{display:block;color:#9699a4;font-size:10px;line-height:1.4;margin-top:3px}
+.permission-state{font-size:9px;letter-spacing:.5px;color:#b9bbc4;border:1px solid #42444d;border-radius:20px;padding:2px 6px;white-space:nowrap}
+.permission-state.allowed{color:#c7e99b;border-color:#596b43}
+
 </style>
 </head>
 <body>
@@ -38,7 +50,7 @@
 <aside class="sidebar">
 <div class="brand"><div class="mark">N</div> NEXUS AI <span class="pill">LAB</span></div><button class="auth-logout" id="logoutBtn">↪ Cerrar sesión</button>
 <button class="newtask" id="newTask">＋ &nbsp; Nueva tarea</button>
-<div><div class="navtitle">Espacio</div><select id="projectSelect" class="model-select" style="width:100%;max-width:none"><option value="default">Mi espacio</option></select><button class="ghost" id="newProject" style="width:100%">＋ Nuevo proyecto</button><button class="ghost" id="exportData" style="width:100%">↓ Exportar mis datos</button><div class="navitem active"><span class="ico">◈</span> Nueva conversación</div><div class="navitem" id="filesNav"><span class="ico">▤</span> Archivos del contexto</div><div class="navitem" id="reviewNav"><span class="ico">⌘</span> Revisar cambios</div></div>
+<div><div class="navtitle">Espacio</div><select id="projectSelect" class="model-select" style="width:100%;max-width:none"><option value="default">Mi espacio</option></select><button class="ghost" id="newProject" style="width:100%">＋ Nuevo proyecto</button><button class="ghost" id="exportData" style="width:100%">↓ Exportar mis datos</button><div class="navitem active"><span class="ico">◈</span> Nueva conversación</div><div class="navitem" id="filesNav"><span class="ico">▤</span> Archivos del contexto</div><div class="navitem" id="reviewNav"><span class="ico">⌘</span> Revisar cambios</div><div class="navitem" id="permissionsNav"><span class="ico">⛨</span> Permisos del agente</div></div>
 <div><div class="navtitle">Recientes</div><div class="recent" id="recent"><div class="empty">Tus conversaciones aparecerán aquí.</div></div></div>
 <div class="profile"><div class="avatar">SC</div><div><b>Espacio personal</b><small>Prototipo local del navegador</small></div></div>
 </aside>
@@ -67,7 +79,8 @@
 <div class="panelhead"><span>Archivos y contexto</span><span class="status">Seguro</span></div>
 <div class="repo"><strong>▣ &nbsp; Contexto de conversación</strong><small>Archivos adjuntos a esta sesión</small><div class="filelist" id="filelist"><div class="empty">Adjunta archivos para añadir contexto a esta sesión.</div></div></div>
 <div class="dropzone" id="dropzone">Arrastra archivos aquí<br>o <button id="browseBtn" style="background:none;border:0;color:var(--accent);text-decoration:underline;padding:0">selecciona desde tu equipo</button><input id="fileInput" type="file" multiple></div>
-<div class="panelhead"><span>Memoria de NEXUS</span><button class="ghost" id="addMemory" style="padding:4px 7px">＋</button></div><div id="memoryList" class="repo"><div class="empty">Aún no hay recuerdos guardados.</div></div><div class="panelhead"><span>Actividad</span><span class="pill" id="activityCount">0</span></div>
+<div class="panelhead"><span>Memoria de NEXUS</span><button class="ghost" id="addMemory" style="padding:4px 7px">＋</button></div><div id="memoryList" class="repo"><div class="empty">Aún no hay recuerdos guardados.</div></div><div class="panelhead"><span>Permisos del agente</span><span class="pill">RESTRINGIDO</span></div><div class="repo" id="permissionPanel"><div class="empty">Consultando política de seguridad…</div></div><div class="notice">Los permisos de escritura, ejecución, GitHub y despliegue permanecen bloqueados. Esta vista informa la política del servidor; no activa herramientas.</div>
+<div class="panelhead"><span>Actividad</span><span class="pill" id="activityCount">0</span></div>
 <div class="activity" id="activity"><div class="empty">Las acciones de esta sesión aparecerán aquí.</div></div>
 <div class="panelhead"><span>Estado del prototipo</span></div>
 <div class="notice">Los archivos se leen localmente. Al enviar una consulta, el texto adjunto se comparte con el proveedor de IA configurado para analizarlo.</div>
@@ -193,6 +206,18 @@ $('#logoutBtn').onclick=async()=>{
  $('#authOverlay').style.display='grid';$('#authPassword').disabled=false;$('#authSubmit').disabled=false;$('#authTitle').textContent='Sesión cerrada';$('#authDescription').textContent='Ingresa tu contraseña para volver a entrar.';$('#authError').textContent='';toast('Sesión cerrada');
 };
 checkNexusSession();
+
+async function loadPermissionPolicy(){
+ const panel=$('#permissionPanel');
+ try{
+  const response=await fetch('/api/permissions',{method:'GET',credentials:'same-origin',cache:'no-store'});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||'No se pudo cargar la política.');
+  panel.innerHTML='<div class="permission-list">'+data.capabilities.map(item=>'<div class="permission-row"><span class="permission-dot '+(item.allowed?'allowed':'')+'"></span><div class="permission-copy"><b>'+esc(item.label)+'</b><small>'+esc(item.scope)+'</small></div><span class="permission-state '+(item.allowed?'allowed':'')+'">'+(item.allowed?'PERMITIDO':'BLOQUEADO')+'</span></div>').join('')+'</div>';
+ }catch(err){panel.textContent=err.message||'No se pudo consultar la política de permisos.'}
+}
+$('#permissionsNav').onclick=()=>{$('#permissionPanel').scrollIntoView({behavior:'smooth',block:'center'});loadPermissionPolicy()};
+loadPermissionPolicy();
 
 </script>
 </body></html>
