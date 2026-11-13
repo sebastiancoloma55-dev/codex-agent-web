@@ -1,24 +1,42 @@
-# Forge — alternativa web independiente a Codex
+# NEXUS AI
 
-Prototipo inicial de interfaz para un agente de programación asistida por IA.
+Plataforma independiente de asistente multimodelo. Este repositorio se desarrolla en la rama `nexus-ai/development`; la rama `main` se conserva sin cambios.
 
-## Estado actual
-- Interfaz adaptable a escritorio y móvil.
-- Conversación de demostración con sugerencias.
-- Contexto visual de archivos seleccionados (solo registra nombre, tamaño y tipo en memoria del navegador).
-- Registro de actividad de la sesión.
-- Sin ejecución de comandos, sin edición de archivos locales y sin conexión a un proveedor de IA.
-- No sube archivos ni guarda conversaciones en un servidor.
+## Estado de esta etapa
 
-## Ejecutar
-Es una página estática: abre `index.html` en un navegador o sirve este repositorio con un servicio de hosting estático.
+- Interfaz web rebrandeada como NEXUS AI, adaptable a escritorio y móvil.
+- Chat conectado a una API propia con adaptadores para Anthropic, OpenAI, OpenRouter y Gemini.
+- Lectura local de archivos de texto, PDF y hojas de cálculo para adjuntarlos como contexto a una conversación.
+- Claves de proveedor leídas exclusivamente desde variables de entorno del servidor.
+- Sin credenciales incluidas en el repositorio.
+- Sin base de datos, autenticación, memoria persistente, ejecución de herramientas ni integración GitHub activa todavía.
+- No se ha creado un despliegue de Vercel ni se han activado servicios de pago.
 
-## Próximos pasos
-1. Añadir API de aplicación y autenticación.
-2. Integrar un proveedor de IA con un nivel gratuito disponible, revisando límites y condiciones antes de elegirlo.
-3. Implementar lectura de archivos con consentimiento y contexto acotado.
-4. Crear diffs revisables antes de aplicar cambios.
-5. Añadir ejecución de herramientas en un entorno aislado con aprobaciones explícitas.
+## Desarrollo local
 
-## Seguridad
-No guardes claves de API, tokens, secretos ni archivos privados en el repositorio. El repositorio debe permanecer privado si se añadirá código o configuración sensible.
+Sirve el repositorio con Vercel CLI o un entorno compatible con funciones serverless. La página estática usa `/api/chat` para conversar. Sin variables privadas configuradas, la API devuelve un mensaje claro de configuración pendiente.
+
+## Variables de entorno (solo en el entorno privado)
+
+Selecciona un proveedor con `AI_PROVIDER`:
+
+- `anthropic`: `ANTHROPIC_API_KEY`, opcional `ANTHROPIC_MODEL`.
+- `openai`: `OPENAI_API_KEY`, opcional `AI_MODEL`.
+- `openrouter`: `OPENROUTER_API_KEY`, opcional `AI_MODEL`.
+- `gemini`: `GEMINI_API_KEY`, opcional `GEMINI_MODEL`.
+
+Opcionales: `APP_URL`. Nunca guardes claves en Git, archivos públicos, código del navegador o capturas.
+
+## Próximas fases
+
+1. Autenticación y perfiles.
+2. Persistencia de conversaciones y memoria con controles de usuario.
+3. Selector de modelos y gestión de disponibilidad/costos.
+4. Proyectos, archivos y artefactos persistentes.
+5. Herramientas con permisos granulares, sandbox y confirmación de acciones sensibles.
+6. Integraciones OAuth con GitHub y otros servicios.
+7. Pruebas automatizadas, revisión de seguridad y despliegue de preview autorizado.
+
+## Costos y despliegue
+
+Las llamadas a Anthropic, OpenAI, Gemini u OpenRouter pueden tener límites o costos según el proveedor y el modelo. No configures claves ni actives recursos facturables sin revisar antes sus condiciones. El despliegue queda expresamente pendiente de autorización.
