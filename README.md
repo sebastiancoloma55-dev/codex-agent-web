@@ -11,14 +11,21 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 - Sin credenciales incluidas en el repositorio.
 - Historial de conversaciones guardado localmente en el navegador; todavía no hay sincronización entre dispositivos ni memoria persistente de servidor.
 - Proyectos de trabajo, memoria editable por usuario y exportación de respaldo guardados localmente en el navegador.
-- Sin autenticación, ejecución de herramientas ni integración GitHub activa todavía.
+- Acceso privado de contraseña única con sesión firmada, cookie segura y protección del endpoint de chat; todavía no hay cuentas individuales ni roles.
+- Límite inicial de intentos de acceso en memoria del proceso (protección básica, no rate limiting distribuido).
+- Sin ejecución de herramientas ni integración GitHub activa todavía.
 - No se ha creado un despliegue de Vercel ni se han activado servicios de pago.
 
 ## Desarrollo local
 
-Sirve el repositorio con Vercel CLI o un entorno compatible con funciones serverless. La página estática usa `/api/chat` para conversar. Sin variables privadas configuradas, la API devuelve un mensaje claro de configuración pendiente.
+Sirve el repositorio con Vercel CLI o un entorno compatible con funciones serverless. La página estática consulta `/api/auth` al iniciar y usa `/api/chat` solo con una sesión válida. La cookie requiere HTTPS (por ejemplo, Vercel Preview). En desarrollo local HTTP, configura un proxy HTTPS o adapta el entorno de pruebas; no desactives la seguridad en un despliegue público.
 
 ## Variables de entorno (solo en el entorno privado)
+
+Configura estas variables únicamente en el entorno privado del servidor (nunca en GitHub ni en el navegador):
+
+- `NEXUS_ACCESS_PASSWORD`: contraseña de acceso privado.
+- `NEXUS_SESSION_SECRET`: secreto aleatorio de al menos 32 caracteres para firmar sesiones. Usa un valor distinto de la contraseña.
 
 Selecciona un proveedor con `AI_PROVIDER`:
 
@@ -31,7 +38,7 @@ Opcionales: `APP_URL`. Nunca guardes claves en Git, archivos públicos, código 
 
 ## Próximas fases
 
-1. Autenticación y perfiles.
+1. Cuentas individuales, perfiles y roles (la capa actual es una contraseña compartida).
 2. Persistencia de conversaciones y memoria con controles de usuario.
 3. Ampliar catálogo de modelos y gestión transparente de disponibilidad/costos.
 4. Proyectos, archivos y artefactos persistentes.
