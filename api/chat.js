@@ -2,6 +2,28 @@ import { requireSession } from "./auth.js";
 
 const json = (res, status, body) => res.status(status).json(body);
 
+const requestWindows = new Map();
+const CHAT_LIMIT = 20;
+const CHAT_WINDOW_MS = 60 * 1000;
+
+function allowChatRequest(req) {
+  const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
+  const now = Date.now();
+  let state = requestWindows.get(ip);
+  if (!state || now >= state.resetAt) {
+    state = { count: 0, resetAt: now + CHAT_WINDOW_MS };
+    requestWindows.set(ip, state);
+  }
+  if (state.count >= CHAT_LIMIT) return false;
+  state.count += 1;
+  if (requestWindows.size > 1000) {
+    for (const [key, value] of requestWindows) {
+      if (now >= value.resetAt) requestWindows.delete(key);
+    }
+  }
+  return true;
+}
+
 const MODELS = {
   anthropic: ["claude-3-5-haiku-latest", "claude-3-7-sonnet-latest"],
   openai: ["gpt-4o-mini", "gpt-4o"],
@@ -10,8 +32,10 @@ const MODELS = {
 };
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
   if (!requireSession(req, res)) return;
   if (req.method !== "POST") return json(res, 405, { error: "Método no permitido" });
+  if (!allowChatRequest(req)) return json(res, 429, { error: "Has alcanzado el límite temporal de 20 consultas por minuto. Espera un momento e inténtalo nuevamente." });
   const message = String(req.body?.message || "").trim();
   const context = String(req.body?.context || "").slice(0, 30000);
   const history = Array.isArray(req.body?.history) ? req.body.history.slice(-16).filter(x => x && ["user", "assistant"].includes(x.role) && typeof x.content === "string").map(x => ({ role: x.role, content: x.content.slice(0, 8000) })) : [];
@@ -31,6 +55,7 @@ export default async function handler(req, res) {
       if (!key) return json(res, 503, { error: "Falta configurar ANTHROPIC_API_KEY en el entorno privado." });
       const upstream = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
+        signal: AbortSignal.timeout(45000),
         headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
         body: JSON.stringify({ model, max_tokens: 2200, system, messages: [...history, { role: "user", content: userContent }] })
       });
@@ -53,7 +78,7 @@ export default async function handler(req, res) {
       const key = process.env.GEMINI_API_KEY;
       if (!key) return json(res, 503, { error: "Falta configurar GEMINI_API_KEY en el entorno privado." });
       const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(key), {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", signal: AbortSignal.timeout(45000), headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [...history.map(x => ({ role: x.role === "assistant" ? "model" : "user", parts: [{ text: x.content }] })), { role: "user", parts: [{ text: userContent }] }] })
       });
       const data = await upstream.json();
