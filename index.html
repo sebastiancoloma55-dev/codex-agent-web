@@ -41,6 +41,17 @@
 .permission-copy small{display:block;color:#9699a4;font-size:10px;line-height:1.4;margin-top:3px}
 .permission-state{font-size:9px;letter-spacing:.5px;color:#b9bbc4;border:1px solid #42444d;border-radius:20px;padding:2px 6px;white-space:nowrap}
 .permission-state.allowed{color:#c7e99b;border-color:#596b43}
+.github-explorer{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.github-explorer input{width:100%;background:#101114;border:1px solid #393b44;color:var(--text);border-radius:7px;padding:8px;font-size:11px;min-width:0}
+.github-controls{display:grid;grid-template-columns:1fr 82px;gap:6px}
+.github-btn{background:#292c33;border:1px solid #454852;border-radius:7px;padding:8px;color:#e4e6eb;font-size:11px}
+.github-files{max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.github-file{background:transparent;border:0;text-align:left;color:#c7c9d1;padding:6px;border-radius:5px;font-size:11px;overflow-wrap:anywhere}
+.github-file:hover{background:#292c33}
+.github-file.active{background:#343a2a;color:var(--accent)}
+.github-preview{max-height:240px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#101114;border:1px solid var(--line);border-radius:7px;padding:9px;color:#c9ccd4;font:10px/1.5 ui-monospace,monospace}
+.github-note{font-size:10px;color:var(--muted);line-height:1.45}
+
 
 </style>
 </head>
@@ -77,6 +88,17 @@
 </main>
 <aside class="inspector">
 <div class="panelhead"><span>Archivos y contexto</span><span class="status">Seguro</span></div>
+<div class="panelhead"><span>Repositorio GitHub</span><span class="pill">SOLO LECTURA</span></div>
+<div class="github-explorer">
+ <input id="githubRepo" value="sebastiancoloma55-dev/codex-agent-web" aria-label="Repositorio público" placeholder="usuario/repositorio">
+ <div class="github-controls"><input id="githubBranch" value="main" aria-label="Rama" placeholder="Rama"><button class="github-btn" id="githubLoad">Explorar</button></div>
+ <input id="githubSearch" placeholder="Filtrar archivos…" aria-label="Filtrar archivos" disabled>
+ <div class="github-note" id="githubStatus">Explora un repositorio público sin entregar credenciales. No se realizan cambios.</div>
+ <div class="github-files" id="githubFiles"><div class="empty">Los archivos aparecerán aquí.</div></div>
+ <div id="githubSelected" class="github-note"></div>
+ <pre id="githubPreview" class="github-preview hidden"></pre>
+ <button class="github-btn hidden" id="githubAddContext">＋ Añadir archivo al contexto</button>
+</div>
 <div class="repo"><strong>▣ &nbsp; Contexto de conversación</strong><small>Archivos adjuntos a esta sesión</small><div class="filelist" id="filelist"><div class="empty">Adjunta archivos para añadir contexto a esta sesión.</div></div></div>
 <div class="dropzone" id="dropzone">Arrastra archivos aquí<br>o <button id="browseBtn" style="background:none;border:0;color:var(--accent);text-decoration:underline;padding:0">selecciona desde tu equipo</button><input id="fileInput" type="file" multiple></div>
 <div class="panelhead"><span>Memoria de NEXUS</span><button class="ghost" id="addMemory" style="padding:4px 7px">＋</button></div><div id="memoryList" class="repo"><div class="empty">Aún no hay recuerdos guardados.</div></div><div class="panelhead"><span>Permisos del agente</span><span class="pill">RESTRINGIDO</span></div><div class="repo" id="permissionPanel"><div class="empty">Consultando política de seguridad…</div></div><div class="notice">Los permisos de escritura, ejecución, GitHub y despliegue permanecen bloqueados. Esta vista informa la política del servidor; no activa herramientas.</div>
@@ -124,6 +146,81 @@ function addMessage(role,text){welcome.classList.add('hidden');currentMessages.p
 function responseFor(text){const t=text.toLowerCase();if(t.includes('archivo')||t.includes('proyecto')||t.includes('estructura'))return 'Para analizar un proyecto real, adjunta los archivos relevantes usando “Adjuntar archivos”. En esta versión puedo registrar sus nombres y mostrar el contexto seleccionado, pero aún no envío el contenido a un modelo de IA.\n\nPlan sugerido:\n1. Identificar el punto de entrada y las dependencias.\n2. Mapear los módulos principales.\n3. Definir la tarea y sus criterios de aceptación.\n4. Proponer cambios pequeños y revisables.\n5. Preparar pruebas antes de aplicar modificaciones.';if(t.includes('error')||t.includes('revisa')||t.includes('bug'))return 'Modo de revisión preparado. Para una revisión real necesitamos conectar un modelo de IA y facilitar el código.\n\nCuando se conecte, el flujo será: reproducir el problema → localizar la causa → proponer un parche → revisar el diff → ejecutar pruebas con autorización. Por ahora no se ha inspeccionado ni modificado ningún archivo.';if(t.includes('prueba'))return 'Plan de pruebas inicial:\n1. Caso normal: entrada válida y resultado esperado.\n2. Límites: valores vacíos, tamaños máximos y caracteres especiales.\n3. Errores: dependencia no disponible, permisos insuficientes y tiempos de espera.\n4. Regresión: verificar que el comportamiento anterior siga funcionando.\n5. Evidencia: registrar resultado, pasos y versión.\n\nEste es un ejemplo demostrativo; aún no se ejecutan pruebas.';if(t.includes('plan')||t.includes('funcionalidad'))return 'Plan de implementación sugerido:\n1. Aclarar el comportamiento esperado.\n2. Identificar archivos y dependencias afectadas.\n3. Proponer una solución mínima.\n4. Mostrar un diff para revisión.\n5. Validar con pruebas y documentar resultados.\n\nNota: las modificaciones reales requieren conectar el repositorio y un agente de IA.';return 'He registrado tu solicitud en la sesión de demostración. Para convertirla en una tarea de programación real, el siguiente paso es conectar un proveedor de IA y una fuente de código autorizada.\n\nNo se ha ejecutado código, no se ha conectado a internet y no se han modificado archivos.'}
 async function send(){const text=promptBox.value.trim();if(!text)return;addMessage('user',text);promptBox.value='';taskCount++;$('#recent').innerHTML='<button>'+esc(text.slice(0,32))+'</button>'+$('#recent').innerHTML;logActivity('Solicitud registrada');const row=addMessage('assistant','');const b=row.querySelector('.bubble');b.textContent='Enviando la consulta al agente…';const memoryContext=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\\n');const context=(memoryContext?'MEMORIA DEL USUARIO:\\n'+memoryContext+'\\n\\n':'')+files.filter(f=>f.preview).map(f=>'ARCHIVO: '+f.name+'\\n'+f.preview.slice(0,30000)).join('\\n\\n---\\n\\n');try{const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context,history:currentMessages.slice(0,-2).filter(m=>m.text).map(m=>({role:m.role,content:m.text})),provider:$('#providerSelect').value,model:$('#modelSelect').value})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||'No se pudo conectar con el proveedor de IA.');b.textContent=data.reply||'El proveedor no devolvió una respuesta.';if(currentMessages.at(-1)?.role==='assistant'&&!currentMessages.at(-1).text)currentMessages.pop();currentMessages.push({role:'assistant',text:b.textContent});saveCurrent();logActivity('Respuesta recibida · '+(data.model||data.provider||'IA'))}catch(err){b.textContent='No se pudo completar la solicitud: '+(err.message||'Error de conexión')+'\\n\\nComprueba que el proveedor elegido tenga su clave configurada en el servidor. No pongas claves en esta página ni en GitHub.';if(currentMessages.at(-1)?.role==='assistant'&&!currentMessages.at(-1).text)currentMessages.pop();currentMessages.push({role:'assistant',text:b.textContent});saveCurrent();logActivity('Error de conexión con IA')}}
 function reset(){chat.innerHTML='';currentMessages=[];currentConversationId=null;welcome.classList.remove('hidden');promptBox.value='';renderRecent();logActivity('Nueva conversación');promptBox.focus()}
+
+/* GitHub public repository browser: read-only, no token and no write endpoints. */
+let githubTree=[],githubCurrentFile=null,githubCurrentText='';
+const githubTextExtensions=new Set(['txt','md','mdx','json','js','jsx','ts','tsx','html','css','scss','py','java','go','rs','sql','xml','yml','yaml','toml','sh','bash','env.example','gitignore','dockerfile','vue','svelte','php','rb','c','cpp','h','hpp','csv','log']);
+function parseGitHubRepo(value){
+ const raw=String(value||'').trim().replace(/^https?:\\/\\/github\\.com\\//i,'').replace(/\\.git$/i,'').replace(/^\\/+|\\/+$/g,'');
+ const parts=raw.split('/');
+ if(parts.length!==2||!parts.every(x=>/^[A-Za-z0-9_.-]+$/.test(x)))throw new Error('Escribe un repositorio válido: usuario/repositorio.');
+ return parts;
+}
+function isTextGitHubFile(path){
+ const name=path.split('/').pop().toLowerCase();
+ const ext=name.includes('.')?name.split('.').pop():name;
+ return githubTextExtensions.has(ext)||['readme','license','dockerfile','makefile','.gitignore'].includes(name);
+}
+function renderGitHubTree(){
+ const list=$('#githubFiles'),q=$('#githubSearch').value.trim().toLowerCase();
+ const items=githubTree.filter(x=>x.type==='blob'&&isTextGitHubFile(x.path)&&(!q||x.path.toLowerCase().includes(q))).slice(0,250);
+ list.innerHTML=items.map(x=>'<button class="github-file '+(githubCurrentFile?.path===x.path?'active':'')+'" data-gh-path="'+esc(x.path)+'">▤ '+esc(x.path)+'</button>').join('')||'<div class="empty">No hay archivos de texto que coincidan.</div>';
+ list.querySelectorAll('[data-gh-path]').forEach(b=>b.onclick=()=>openGitHubFile(b.dataset.ghPath));
+}
+async function loadGitHubTree(){
+ const status=$('#githubStatus'),btn=$('#githubLoad');
+ btn.disabled=true;status.textContent='Consultando la estructura pública del repositorio…';
+ $('#githubFiles').innerHTML='';$('#githubPreview').classList.add('hidden');$('#githubAddContext').classList.add('hidden');
+ githubTree=[];githubCurrentFile=null;githubCurrentText='';
+ try{
+  const [owner,name]=parseGitHubRepo($('#githubRepo').value);
+  const branch=$('#githubBranch').value.trim()||'main';
+  const response=await fetch('https://api.github.com/repos/'+encodeURIComponent(owner)+'/'+encodeURIComponent(name)+'/git/trees/'+encodeURIComponent(branch)+'?recursive=1',{headers:{Accept:'application/vnd.github+json'}});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.message||'No se pudo leer el repositorio. Verifica que sea público y que la rama exista.');
+  if(data.truncated)status.textContent='GitHub devolvió un árbol parcial (repositorio muy grande).';
+  githubTree=Array.isArray(data.tree)?data.tree:[];
+  $('#githubSearch').disabled=false;
+  renderGitHubTree();
+  status.textContent='Repositorio público cargado · '+githubTree.filter(x=>x.type==='blob').length+' archivos detectados. Solo lectura.';
+  logActivity('Estructura pública de GitHub consultada');
+ }catch(err){status.textContent=err.message||'Error al consultar GitHub';}
+ finally{btn.disabled=false}
+}
+async function openGitHubFile(path){
+ const status=$('#githubStatus'),preview=$('#githubPreview'),add=$('#githubAddContext');
+ status.textContent='Leyendo '+path+'…';preview.classList.add('hidden');add.classList.add('hidden');
+ try{
+  const [owner,name]=parseGitHubRepo($('#githubRepo').value);
+  const branch=$('#githubBranch').value.trim()||'main';
+  const url='https://api.github.com/repos/'+encodeURIComponent(owner)+'/'+encodeURIComponent(name)+'/contents/'+path.split('/').map(encodeURIComponent).join('/')+'?ref='+encodeURIComponent(branch);
+  const response=await fetch(url,{headers:{Accept:'application/vnd.github+json'}});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.message||'No se pudo leer este archivo.');
+  if(data.type!=='file'||!data.content||data.encoding!=='base64')throw new Error('GitHub no entregó contenido de texto para este archivo.');
+  const binary=atob(data.content.replace(/\\s/g,''));
+  const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+  const textContent=new TextDecoder('utf-8',{fatal:false}).decode(bytes);
+  if(bytes.byteLength>300000)throw new Error('Archivo demasiado grande para previsualizar (máximo 300 KB).');
+  githubCurrentFile={path,sha:data.sha,size:bytes.byteLength};
+  githubCurrentText=textContent;
+  $('#githubSelected').textContent=path+' · '+bytes.byteLength.toLocaleString('es-CL')+' bytes · '+data.sha.slice(0,8);
+  preview.textContent=textContent.slice(0,50000);
+  preview.classList.remove('hidden');add.classList.remove('hidden');
+  renderGitHubTree();status.textContent='Archivo leído desde GitHub. Aún no se ha enviado al modelo.';
+ }catch(err){status.textContent=err.message||'No se pudo abrir el archivo.';githubCurrentFile=null;githubCurrentText=''}
+}
+function addGitHubFileToContext(){
+ if(!githubCurrentFile||!githubCurrentText)return;
+ const key=$('#githubRepo').value.trim()+'/'+githubCurrentFile.path;
+ if(files.some(f=>f.sourceKey===key)){toast('Ese archivo ya está en el contexto');return}
+ files.push({name:githubCurrentFile.path,size:githubCurrentFile.size,type:'text/plain',status:'Leído desde GitHub · solo lectura',preview:githubCurrentText,sourceKey:key});
+ renderFiles();logActivity('Archivo GitHub añadido al contexto: '+githubCurrentFile.path);
+ toast('Archivo añadido al contexto de conversación');
+}
+$('#githubLoad').onclick=loadGitHubTree;
+$('#githubSearch').addEventListener('input',renderGitHubTree);
+$('#githubAddContext').onclick=addGitHubFileToContext;
 function renderFiles(){fileList.innerHTML=files.length?files.map((f,i)=>'<div class="file"><span>▧</span><span style="flex:1;min-width:0"><b>'+esc(f.name)+'</b><br><small>'+esc(f.status||'Preparando lectura…')+'</small></span><button data-remove="'+i+'" title="Quitar archivo" style="background:none;border:0;color:#aaa">×</button></div>'+(f.preview?'<details style="margin:0 7px 8px;color:#aeb1bb;font-size:11px"><summary>Vista previa del contenido</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow:auto;background:#101114;padding:8px;border-radius:6px">'+esc(f.preview.slice(0,5000))+'</pre></details>':'')).join(''):'<div class="empty">Adjunta archivos para añadir contexto a esta sesión.</div>';fileList.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{files.splice(+b.dataset.remove,1);renderFiles();logActivity('Archivo quitado del contexto')})}
 async function readFile(f){
  if(f.size>15*1024*1024) return {status:'Demasiado grande (máximo 15 MB)',preview:''};
