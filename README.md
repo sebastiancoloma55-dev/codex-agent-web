@@ -5,11 +5,11 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 ## Estado de esta etapa
 
 - Interfaz web rebrandeada como NEXUS AI, adaptable a escritorio y móvil.
-- Chat conectado a una API propia con adaptadores para Anthropic, OpenAI, OpenRouter y Gemini.
+- Chat con selector de proveedor/modelo y adaptadores de API para Anthropic, OpenAI, OpenRouter y Gemini (requiere claves privadas).
 - Lectura local de archivos de texto, PDF y hojas de cálculo para adjuntarlos como contexto a una conversación.
 - Claves de proveedor leídas exclusivamente desde variables de entorno del servidor.
 - Sin credenciales incluidas en el repositorio.
-- Sin base de datos, autenticación, memoria persistente, ejecución de herramientas ni integración GitHub activa todavía.
+- Historial de conversaciones guardado localmente en el navegador; todavía no hay sincronización entre dispositivos ni memoria persistente de servidor.\n- Sin autenticación, ejecución de herramientas ni integración GitHub activa todavía.
 - No se ha creado un despliegue de Vercel ni se han activado servicios de pago.
 
 ## Desarrollo local
@@ -31,7 +31,7 @@ Opcionales: `APP_URL`. Nunca guardes claves en Git, archivos públicos, código 
 
 1. Autenticación y perfiles.
 2. Persistencia de conversaciones y memoria con controles de usuario.
-3. Selector de modelos y gestión de disponibilidad/costos.
+3. Ampliar catálogo de modelos y gestión transparente de disponibilidad/costos.
 4. Proyectos, archivos y artefactos persistentes.
 5. Herramientas con permisos granulares, sandbox y confirmación de acciones sensibles.
 6. Integraciones OAuth con GitHub y otros servicios.
