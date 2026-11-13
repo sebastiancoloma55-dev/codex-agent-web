@@ -68,6 +68,7 @@ export default async function handler(req, res) {
       if (!key) return json(res, 503, { error: "Falta configurar la clave privada del proveedor seleccionado." });
       const upstream = await fetch(isRouter ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.openai.com/v1/chat/completions", {
         method: "POST",
+        signal: AbortSignal.timeout(45000),
         headers: { Authorization: "Bearer " + key, "Content-Type": "application/json", ...(isRouter ? { "HTTP-Referer": process.env.APP_URL || "https://localhost", "X-Title": "NEXUS AI" } : {}) },
         body: JSON.stringify({ model, messages: [{ role: "system", content: system }, ...history, { role: "user", content: userContent }], temperature: 0.4 })
       });
