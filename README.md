@@ -15,7 +15,10 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 - Límite inicial de intentos de acceso en memoria del proceso (8 intentos por ventana de 15 minutos); se validan tamaños de contraseña y cabeceras de cookies. Es protección básica, no rate limiting distribuido.
 - API de chat limitada inicialmente a 20 solicitudes por minuto por IP y timeout de 45 segundos por llamada al proveedor; valida el formato del cuerpo, limita mensaje/contexto/historial y aplica un máximo de 70.000 caracteres de texto total. El limitador en memoria no sustituye un rate limiter distribuido.
 - Endpoint privado `/api/permissions` y panel de capacidades: consultas, lectura de adjuntos e historial local permitidos; escritura de archivos, ejecución, GitHub, despliegues y gestión de secretos bloqueados.
-- Sin ejecución de herramientas ni integración GitHub activa todavía. El panel de permisos describe la política objetivo; no hay herramientas de escritura o ejecución expuestas para conceder.
+- Explorador de repositorios GitHub públicos en modo solo lectura desde el navegador: árbol de archivos, filtro, vista previa y selección de archivos para contexto; no requiere token ni permite escrituras.
+- Orquestador multiagente inicial con cuatro roles secuenciales (planificación, ingeniería, seguridad y QA) sobre el proveedor/modelo elegido. Cada ejecución puede realizar hasta cuatro llamadas al proveedor y generar costos; no son miles de procesos autónomos ni agentes concurrentes.
+- El equipo produce análisis, propuestas y diffs sugeridos; no aplica parches, no ejecuta comandos ni modifica GitHub. La revisión y aprobación son conceptuales en esta etapa; las herramientas de escritura y sandbox siguen bloqueadas.
+- Sin ejecución de herramientas de sistema ni integración GitHub de escritura. El panel de permisos describe las capacidades actuales y bloqueadas.
 - No se ha creado un despliegue de Vercel ni se han activado servicios de pago.
 
 ## Desarrollo local
