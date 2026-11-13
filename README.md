@@ -12,8 +12,8 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 - Historial de conversaciones guardado localmente en el navegador; todavía no hay sincronización entre dispositivos ni memoria persistente de servidor.
 - Proyectos de trabajo, memoria editable por usuario y exportación de respaldo guardados localmente en el navegador.
 - Acceso privado de contraseña única con sesión firmada, cookie segura y protección del endpoint de chat; todavía no hay cuentas individuales ni roles.
-- Límite inicial de intentos de acceso en memoria del proceso (protección básica, no rate limiting distribuido).
-- API de chat limitada inicialmente a 20 solicitudes por minuto por IP y timeout de 45 segundos por llamada al proveedor; el limitador en memoria no sustituye un rate limiter distribuido.
+- Límite inicial de intentos de acceso en memoria del proceso (8 intentos por ventana de 15 minutos); se validan tamaños de contraseña y cabeceras de cookies. Es protección básica, no rate limiting distribuido.
+- API de chat limitada inicialmente a 20 solicitudes por minuto por IP y timeout de 45 segundos por llamada al proveedor; valida el formato del cuerpo, limita mensaje/contexto/historial y aplica un máximo de 70.000 caracteres de texto total. El limitador en memoria no sustituye un rate limiter distribuido.
 - Endpoint privado `/api/permissions` y panel de capacidades: consultas, lectura de adjuntos e historial local permitidos; escritura de archivos, ejecución, GitHub, despliegues y gestión de secretos bloqueados.
 - Sin ejecución de herramientas ni integración GitHub activa todavía. El panel de permisos describe la política objetivo; no hay herramientas de escritura o ejecución expuestas para conceder.
 - No se ha creado un despliegue de Vercel ni se han activado servicios de pago.
@@ -26,7 +26,7 @@ Sirve el repositorio con Vercel CLI o un entorno compatible con funciones server
 
 Configura estas variables únicamente en el entorno privado del servidor (nunca en GitHub ni en el navegador):
 
-- `NEXUS_ACCESS_PASSWORD`: contraseña de acceso privado.
+- `NEXUS_ACCESS_PASSWORD`: contraseña de acceso privado (máximo 256 caracteres).
 - `NEXUS_SESSION_SECRET`: secreto aleatorio de al menos 32 caracteres para firmar sesiones. Usa un valor distinto de la contraseña.
 
 Selecciona un proveedor con `AI_PROVIDER`:
