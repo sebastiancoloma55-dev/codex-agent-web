@@ -119,7 +119,7 @@
 <div class="panelhead"><span>Equipo multiagente</span><span class="pill">4 ESPECIALISTAS</span></div>
 <div class="agent-orchestrator">
  <div style="font-size:11px;color:#c5c8d1">Un equipo de agentes especializados analiza la tarea por etapas y revisa el resultado de los demás.</div>
- <textarea id="agentTask" placeholder="Describe la tarea que debe resolver el equipo…"></textarea>
+ <textarea id="agentTask" maxlength="8000" placeholder="Describe la tarea que debe resolver el equipo…"></textarea>
  <div class="agent-warning">Cada ejecución realiza hasta 4 consultas al proveedor de IA. Puede generar costos según tu proveedor y modelo. No modifica archivos ni ejecuta código.</div>
  <button class="agent-run" id="agentRun">Iniciar equipo de agentes →</button>
  <button class="agent-cancel hidden" id="agentCancel">Cancelar ejecución</button>
@@ -269,7 +269,7 @@ function buildAgentContext(){
  return ((memory?'MEMORIA LOCAL:\n'+memory+'\n\n':'')+(docs?'ARCHIVOS DE CONTEXTO:\n'+docs:'' )).slice(0,27000);
 }
 async function runAgentTeam(){
- const task=$('#agentTask').value.trim();
+ const task=$('#agentTask').value.trim().slice(0,8000);
  if(!task){toast('Describe primero la tarea del equipo');$('#agentTask').focus();return}
  if(agentController){toast('Ya hay una ejecución en curso');return}
  agentController=new AbortController();
