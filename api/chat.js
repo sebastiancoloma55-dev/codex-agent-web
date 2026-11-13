@@ -1,3 +1,5 @@
+import { requireSession } from "./auth.js";
+
 const json = (res, status, body) => res.status(status).json(body);
 
 const MODELS = {
@@ -8,6 +10,7 @@ const MODELS = {
 };
 
 export default async function handler(req, res) {
+  if (!requireSession(req, res)) return;
   if (req.method !== "POST") return json(res, 405, { error: "Método no permitido" });
   const message = String(req.body?.message || "").trim();
   const context = String(req.body?.context || "").slice(0, 30000);
