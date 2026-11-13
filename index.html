@@ -151,7 +151,7 @@ function reset(){chat.innerHTML='';currentMessages=[];currentConversationId=null
 let githubTree=[],githubCurrentFile=null,githubCurrentText='';
 const githubTextExtensions=new Set(['txt','md','mdx','json','js','jsx','ts','tsx','html','css','scss','py','java','go','rs','sql','xml','yml','yaml','toml','sh','bash','env.example','gitignore','dockerfile','vue','svelte','php','rb','c','cpp','h','hpp','csv','log']);
 function parseGitHubRepo(value){
- const raw=String(value||'').trim().replace(/^https?:\\/\\/github\\.com\\//i,'').replace(/\\.git$/i,'').replace(/^\\/+|\\/+$/g,'');
+ const raw=String(value||'').trim().replace(/^https?:\/\/github\.com\//i,'').replace(/\.git$/i,'').replace(/^\/+|\/+$/g,'');
  const parts=raw.split('/');
  if(parts.length!==2||!parts.every(x=>/^[A-Za-z0-9_.-]+$/.test(x)))throw new Error('Escribe un repositorio válido: usuario/repositorio.');
  return parts;
@@ -198,7 +198,7 @@ async function openGitHubFile(path){
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.message||'No se pudo leer este archivo.');
   if(data.type!=='file'||!data.content||data.encoding!=='base64')throw new Error('GitHub no entregó contenido de texto para este archivo.');
-  const binary=atob(data.content.replace(/\\s/g,''));
+  const binary=atob(data.content.replace(/\s/g,''));
   const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
   const textContent=new TextDecoder('utf-8',{fatal:false}).decode(bytes);
   if(bytes.byteLength>300000)throw new Error('Archivo demasiado grande para previsualizar (máximo 300 KB).');
