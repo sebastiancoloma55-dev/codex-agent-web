@@ -11,6 +11,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return json(res, 405, { error: "Método no permitido" });
   const message = String(req.body?.message || "").trim();
   const context = String(req.body?.context || "").slice(0, 30000);
+  const history = Array.isArray(req.body?.history) ? req.body.history.slice(-16).filter(x => x && ["user", "assistant"].includes(x.role) && typeof x.content === "string").map(x => ({ role: x.role, content: x.content.slice(0, 8000) })) : [];
   const provider = String(req.body?.provider || process.env.AI_PROVIDER || "openrouter").toLowerCase();
   const requestedModel = String(req.body?.model || "");
   if (!message) return json(res, 400, { error: "Escribe un mensaje antes de enviar." });
@@ -28,7 +29,7 @@ export default async function handler(req, res) {
       const upstream = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-        body: JSON.stringify({ model, max_tokens: 2200, system, messages: [{ role: "user", content: userContent }] })
+        body: JSON.stringify({ model, max_tokens: 2200, system, messages: [...history, { role: "user", content: userContent }] })
       });
       const data = await upstream.json();
       if (!upstream.ok) return json(res, 502, { error: data.error?.message || "Anthropic rechazó la solicitud." });
@@ -40,7 +41,7 @@ export default async function handler(req, res) {
       const upstream = await fetch(isRouter ? "https://openrouter.ai/api/v1/chat/completions" : "https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: "Bearer " + key, "Content-Type": "application/json", ...(isRouter ? { "HTTP-Referer": process.env.APP_URL || "https://localhost", "X-Title": "NEXUS AI" } : {}) },
-        body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content: userContent }], temperature: 0.4 })
+        body: JSON.stringify({ model, messages: [{ role: "system", content: system }, ...history, { role: "user", content: userContent }], temperature: 0.4 })
       });
       const data = await upstream.json();
       if (!upstream.ok) return json(res, 502, { error: data.error?.message || "El proveedor de IA devolvió un error." });
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
       if (!key) return json(res, 503, { error: "Falta configurar GEMINI_API_KEY en el entorno privado." });
       const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(key), {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: userContent }] }] })
+        body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [...history.map(x => ({ role: x.role === "assistant" ? "model" : "user", parts: [{ text: x.content }] })), { role: "user", parts: [{ text: userContent }] }] })
       });
       const data = await upstream.json();
       if (!upstream.ok) return json(res, 502, { error: data.error?.message || "Gemini devolvió un error." });
