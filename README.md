@@ -9,7 +9,9 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 - Lectura local de archivos de texto, PDF y hojas de cálculo para adjuntarlos como contexto a una conversación.
 - Claves de proveedor leídas exclusivamente desde variables de entorno del servidor.
 - Sin credenciales incluidas en el repositorio.
-- Historial de conversaciones guardado localmente en el navegador; todavía no hay sincronización entre dispositivos ni memoria persistente de servidor.\n- Sin autenticación, ejecución de herramientas ni integración GitHub activa todavía.
+- Historial de conversaciones guardado localmente en el navegador; todavía no hay sincronización entre dispositivos ni memoria persistente de servidor.
+- Proyectos de trabajo, memoria editable por usuario y exportación de respaldo guardados localmente en el navegador.
+- Sin autenticación, ejecución de herramientas ni integración GitHub activa todavía.
 - No se ha creado un despliegue de Vercel ni se han activado servicios de pago.
 
 ## Desarrollo local
