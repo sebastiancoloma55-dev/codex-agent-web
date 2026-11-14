@@ -14,6 +14,10 @@
 - Exportación local de proyectos, conversaciones, recuerdos y propuestas.
 - Sin escritura en repositorios, ejecución de comandos, sandbox ni despliegues.
 
+## Planificador y validación de dependencias (implementado en esta etapa)
+
+El plan estructurado asigna IDs `ST-1` a `ST-8`. El validador local comprueba referencias inexistentes, dependencias propias y ciclos; calcula las subtareas disponibles al inicio y un orden topológico posible. No añade llamadas al modelo. La interfaz presenta el resultado como simulación: todavía no ejecuta cada subtarea como trabajo independiente ni programa concurrencia real.
+
 ## Qué significa escalar a cientos o miles de agentes
 
 No se deben iniciar miles de llamadas de modelos en paralelo desde el navegador. Eso causaría límites de proveedor, costos impredecibles, pérdida de estado y dificultad para cancelar o auditar.
