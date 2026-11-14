@@ -5,7 +5,7 @@ const POLICY = Object.freeze({
   mode: "restricted",
   capabilities: [
     { id: "chat", label: "Enviar consultas a modelos de IA", allowed: true, scope: "Solo mensajes y contexto que envías" },
-    { id: "multi_agent_analysis", label: "Orquestar equipo de agentes especialistas", allowed: true, scope: "Hasta 4 consultas secuenciales al proveedor configurado; análisis y propuestas, sin herramientas de escritura ni ejecución" },
+    { id: "multi_agent_analysis", label: "Orquestar equipo de agentes especialistas", allowed: true, scope: "Hasta 8 consultas secuenciales al proveedor configurado; análisis y propuestas, sin herramientas de escritura ni ejecución" },
     { id: "read_uploads", label: "Leer archivos adjuntos", allowed: true, scope: "Lectura local en el navegador; el texto se envía al proveedor elegido" },
     { id: "local_history", label: "Guardar historial y memoria local", allowed: true, scope: "Solo en este navegador" },
     { id: "write_project_files", label: "Crear o modificar archivos del proyecto", allowed: false, scope: "Requiere herramienta de archivos y aprobación explícita" },
