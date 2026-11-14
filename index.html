@@ -313,12 +313,12 @@ async function runAgentTeam(){
  agentController=new AbortController();
  const signal=agentController.signal;
  $('#agentRun').disabled=true;$('#agentCancel').classList.remove('hidden');$('#agentOutput').innerHTML='';$('#agentSendChat').classList.add('hidden');
- renderAgentStages(0,0,-1,activeAgents);
  const provider=$('#providerSelect').value,model=$('#modelSelect').value,context=buildAgentContext();
  const results=[];
  const teamSize=Math.min(8,Math.max(4,Number($('#agentCount').value)||4));
  const coreIds=['planner','engineer','security','qa'];
  const activeAgents=agentDefinitions.filter(a=>coreIds.includes(a.id)||(teamSize>=6&&['architect','backend'].includes(a.id))||(teamSize>=8&&['frontend','reviewer'].includes(a.id)));
+ renderAgentStages(0,0,-1,activeAgents);
  try{
   for(let i=0;i<activeAgents.length;i++){
    if(signal.aborted)throw new DOMException('Ejecución cancelada','AbortError');
