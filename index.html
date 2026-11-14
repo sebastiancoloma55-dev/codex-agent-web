@@ -68,6 +68,11 @@
 .agent-warning{font-size:10px;color:#d5c49a;line-height:1.45}
 .agent-history{display:flex;flex-direction:column;gap:8px}.agent-run-record{background:#101114;border:1px solid var(--line);border-radius:8px;padding:9px}.agent-run-record summary{cursor:pointer;font-size:11px;color:#e4e6eb;font-weight:700}.agent-run-meta{font-size:10px;color:var(--muted);margin:5px 0;line-height:1.5}.agent-run-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .agent-cancel{background:transparent;border:1px solid #704949;color:#ffaaaa;border-radius:8px;padding:8px;font-size:11px}
+#agentRegistrySearch{width:100%;background:#101114;border:1px solid #393b44;color:var(--text);border-radius:7px;padding:9px;font-size:11px}
+.agent-assigned{display:flex;align-items:flex-start;gap:8px;justify-content:space-between;padding:8px;border:1px solid var(--line);border-radius:8px;background:#101114}
+.agent-assigned b{display:block;font-size:11px}.agent-assigned small{display:block;color:var(--muted);font-size:10px;line-height:1.4;margin-top:3px}
+.agent-assigned button{background:transparent;border:1px solid #454852;border-radius:6px;padding:4px 7px;color:#d8dbe2;font-size:10px;flex-shrink:0}
+
 
 
 
@@ -168,6 +173,19 @@
  <div class="panelhead"><span>Historial de ejecuciones</span><button class="github-btn" id="clearAgentHistory" type="button">Limpiar</button></div>
  <div id="agentRunHistory" class="agent-history"><div class="empty">Todavía no hay ejecuciones guardadas.</div></div>
  <button class="github-btn hidden" id="agentSendChat">Continuar en el chat</button>
+</div>
+<div class="panelhead"><span>Directorio de agentes</span><span class="pill">1.000 PERFILES</span></div>
+<div class="agent-orchestrator" id="agentRegistry">
+ <div class="github-note">Catálogo de especialistas configurables. Se asignan al proyecto activo como instrucciones de especialidad; las ejecuciones reales siguen limitadas por el equipo y los recursos disponibles.</div>
+ <input id="agentRegistrySearch" placeholder="Buscar especialidad, área o plataforma…" aria-label="Buscar agentes">
+ <select id="agentRegistrySelect" class="model-select" style="width:100%;max-width:none" aria-label="Especialista disponible"></select>
+ <button class="github-btn" id="agentRegistryAdd" type="button">＋ Asignar al proyecto actual</button>
+ <div class="agent-run-meta" id="agentRegistryCount">Cargando catálogo…</div>
+ <div id="agentRegistryAssigned" class="agent-history"></div>
+ <div class="panelhead"><span>Conectores de plataformas</span><span class="pill">ESTADO REAL</span></div>
+ <div class="agent-card"><b>GitHub · lectura pública</b><div class="agent-run-meta">Disponible mediante el explorador existente. Repositorios privados y escritura aún no conectados.</div><span class="permission-state allowed">LECTURA PÚBLICA</span></div>
+ <div class="agent-card"><b>Vercel</b><div class="agent-run-meta">Sin conexión de cuenta. No se consultan proyectos ni despliegues hasta configurar una autorización segura.</div><span class="permission-state">NO CONECTADO</span></div>
+ <div class="agent-card"><b>Otras plataformas</b><div class="agent-run-meta">Preparadas para conectores futuros con permisos individuales y aprobación por operación.</div><span class="permission-state">PENDIENTE</span></div>
 </div>
 <div class="repo"><strong>▣ &nbsp; Contexto de conversación</strong><small>Archivos adjuntos a esta sesión</small><div class="filelist" id="filelist"><div class="empty">Adjunta archivos para añadir contexto a esta sesión.</div></div></div>
 <div class="dropzone" id="dropzone">Arrastra archivos aquí<br>o <button id="browseBtn" style="background:none;border:0;color:var(--accent);text-decoration:underline;padding:0">selecciona desde tu equipo</button><input id="fileInput" type="file" multiple></div>
@@ -347,14 +365,36 @@ function saveAgentRun(record){const index=agentRunHistory.findIndex(x=>x.id===re
 function renderAgentRunHistory(){const panel=$('#agentRunHistory');if(!panel)return;panel.innerHTML=agentRunHistory.length?agentRunHistory.map(r=>'<details class="agent-run-record"><summary>'+esc(r.task.slice(0,90))+' · '+(r.status==='completed'?'Completada':r.status==='cancelled'?'Cancelada':r.status==='running'?'En curso':r.status==='interrupted'?'Interrumpida':'Error')+'</summary><div class="agent-run-meta">'+new Date(r.startedAt).toLocaleString('es-CL')+' · '+esc(r.provider)+' / '+esc(r.model)+' · '+r.teamSize+' especialistas · '+(r.results||[]).length+' respuestas</div><div class="agent-run-meta">'+esc(r.error||'')+'</div>'+(r.results||[]).map(x=>'<details class="agent-card"><summary>'+esc(x.name)+'</summary><pre>'+esc(x.output)+'</pre></details>').join('')+'<div class="agent-run-actions"><button class="github-btn" data-download-agent-run="'+esc(r.id)+'">Descargar informe .md</button></div></details>').join(''):'<div class="empty">Todavía no hay ejecuciones guardadas.</div>';panel.querySelectorAll('[data-download-agent-run]').forEach(b=>b.onclick=()=>downloadAgentRun(b.dataset.downloadAgentRun))}
 function downloadAgentRun(id){const r=agentRunHistory.find(x=>x.id===id);if(!r)return;const md='# Informe de ejecución NEXUS AI\n\n- Fecha: '+r.startedAt+'\n- Estado: '+r.status+'\n- Proveedor/modelo: '+r.provider+' / '+r.model+'\n- Equipo: '+r.teamSize+' especialistas\n\n## Tarea\n'+r.task+'\n\n'+(r.plan?'## Plan de trabajo\n'+r.plan.summary+'\n\n'+r.plan.subtasks.map(st=>'- '+st.id+' '+st.title+' — '+st.assignedTo+' ('+st.priority+')').join('\n')+'\n\n':'')+(r.results||[]).map(x=>'## '+x.name+'\n\n'+x.output).join('\n\n---\n\n')+'\n\n'+(r.error?'## Incidencia\n'+r.error:'');const blob=new Blob([md],{type:'text/markdown;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='nexus-ejecucion-'+id+'.md';a.click();URL.revokeObjectURL(url)}
 
+const registryRoles=['Arquitectura','Desarrollo backend','Desarrollo frontend','Experiencia UX','Seguridad','QA y pruebas','Datos y analítica','DevOps','Investigación','Documentación'];
+const registryDomains=['Aplicaciones web','Aplicaciones móviles','APIs e integraciones','Bases de datos','Inteligencia artificial','Automatización','E-commerce','Infraestructura cloud','Ciberseguridad','Accesibilidad'];
+const registryLevels=['generalista','analista','especialista','senior','auditor','optimizador','investigador','implementador','revisor','estratega'];
+const agentRegistryProfiles=registryRoles.flatMap((role,ri)=>registryDomains.flatMap((domain,di)=>registryLevels.map((level,li)=>({id:'profile-'+ri+'-'+di+'-'+li,name:role+' · '+domain+' · '+level,role,domain,level,goal:'Actúa como '+level+' de '+role.toLowerCase()+' especializado en '+domain.toLowerCase()+'. Analiza la tarea desde esta especialidad, identifica riesgos, dependencias, recomendaciones y criterios verificables. No afirmes ejecutar acciones ni acceder a plataformas sin herramientas autorizadas.'}))));
+function registryStorageKey(){return 'nexus-agent-registry-'+String(currentProjectId||'default')}
+function loadAssignedRegistry(){try{const v=JSON.parse(localStorage.getItem(registryStorageKey())||'[]');return Array.isArray(v)?v.filter(id=>agentRegistryProfiles.some(p=>p.id===id)).slice(0,12):[]}catch{return []}}
+let assignedRegistryProfiles=loadAssignedRegistry();
+function saveAssignedRegistry(){try{localStorage.setItem(registryStorageKey(),JSON.stringify(assignedRegistryProfiles))}catch{toast('No se pudo guardar la asignación en este navegador')}}
+function renderAgentRegistry(filter=''){
+ const query=String(filter||'').trim().toLowerCase();
+ const matches=agentRegistryProfiles.filter(p=>(p.name+' '+p.role+' '+p.domain+' '+p.level).toLowerCase().includes(query)).slice(0,100);
+ const select=$('#agentRegistrySelect');if(!select)return;
+ select.innerHTML=matches.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')||'<option value="">Sin coincidencias</option>';
+ $('#agentRegistryCount').textContent='1.000 perfiles de especialidad · '+matches.length+' resultados visibles · máximo 12 asignados a este proyecto';
+ const assigned=assignedRegistryProfiles.map(id=>agentRegistryProfiles.find(p=>p.id===id)).filter(Boolean);
+ $('#agentRegistryAssigned').innerHTML=assigned.length?assigned.map(p=>'<div class="agent-assigned"><div><b>'+esc(p.name)+'</b><small>'+esc(p.goal)+'</small></div><button type="button" data-registry-remove="'+p.id+'">Quitar</button></div>').join(''):'<div class="empty">Todavía no has asignado especialistas a este proyecto.</div>';
+ $('#agentRegistryAssigned').querySelectorAll('[data-registry-remove]').forEach(b=>b.onclick=()=>{assignedRegistryProfiles=assignedRegistryProfiles.filter(id=>id!==b.dataset.registryRemove);saveAssignedRegistry();renderAgentRegistry($('#agentRegistrySearch').value)});
+}
+$('#agentRegistrySearch').addEventListener('input',e=>renderAgentRegistry(e.target.value));
+$('#agentRegistryAdd').onclick=()=>{const id=$('#agentRegistrySelect').value;if(!id)return;if(assignedRegistryProfiles.includes(id)){toast('Ese especialista ya está asignado');return}if(assignedRegistryProfiles.length>=12){toast('Máximo 12 perfiles asignados por proyecto');return}assignedRegistryProfiles.push(id);saveAssignedRegistry();renderAgentRegistry($('#agentRegistrySearch').value);toast('Especialista asignado al proyecto')};
+renderAgentRegistry();
 function renderAgentStages(active=-1,completed=0,failed=-1,agents=agentDefinitions){
  $('#agentStages').innerHTML=agents.map((a,i)=>'<div class="agent-stage '+(i===failed?'failed':i<completed?'done':i===active?'running':'')+'"><i></i><span style="flex:1">'+esc(a.name)+'</span><small>'+(i===failed?'Error':i<completed?'Completado':i===active?'Trabajando…':'En espera')+'</small></div>').join('');
  $('#agentProgressBar').style.width=(completed/agents.length*100)+'%';
 }
 function buildAgentContext(){
- const memory=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\n');
- const docs=files.filter(f=>f.preview).map(f=>'ARCHIVO: '+f.name+'\n'+f.preview.slice(0,9000)).join('\n\n---\n\n');
- return ((memory?'MEMORIA LOCAL:\n'+memory+'\n\n':'')+(docs?'ARCHIVOS DE CONTEXTO:\n'+docs:'' )).slice(0,27000);
+ const memory=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\\n');
+ const docs=files.filter(f=>f.preview).map(f=>'ARCHIVO: '+f.name+'\\n'+f.preview.slice(0,9000)).join('\\n\\n---\\n\\n');
+ const specialists=assignedRegistryProfiles.map(id=>agentRegistryProfiles.find(p=>p.id===id)).filter(Boolean).map(p=>'- '+p.name+': '+p.goal).join('\\n');
+ return ((memory?'MEMORIA LOCAL:\\n'+memory+'\\n\\n':'')+(specialists?'ESPECIALISTAS ASIGNADOS AL PROYECTO:\\n'+specialists+'\\n\\n':'')+(docs?'ARCHIVOS DE CONTEXTO:\\n'+docs:'' )).slice(0,27000);
 }
 
 
