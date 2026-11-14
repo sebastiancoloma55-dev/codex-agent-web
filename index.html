@@ -253,7 +253,7 @@ $('#githubLoad').onclick=loadGitHubTree;
 $('#githubSearch').addEventListener('input',renderGitHubTree);
 $('#githubAddContext').onclick=addGitHubFileToContext;
 
-/* Multi-agent workflow: four sequential specialist passes using the configured model. */
+/* Multi-agent workflow: configurable teams of 4, 6 or 8 sequential specialist passes using the configured model. */
 const agentDefinitions=[
  {id:'planner',name:'Agente planificador',goal:'Descompón la petición en objetivos, subtareas, dependencias, supuestos, archivos relevantes, riesgos y criterios de aceptación.'},
  {id:'architect',name:'Agente arquitecto',goal:'Diseña arquitectura, módulos, contratos, flujos de datos, escalabilidad y decisiones técnicas. Explica alternativas y trade-offs.'},
