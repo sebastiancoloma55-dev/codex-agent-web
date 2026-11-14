@@ -163,6 +163,10 @@
  <textarea id="agentTask" maxlength="8000" placeholder="Describe la tarea que debe resolver el equipo…"></textarea>
  <div class="agent-warning">Cada agente realiza una consulta al proveedor seleccionado. Un equipo de 8 puede generar hasta 8 llamadas por tarea y costos variables. La ejecución es secuencial para respetar límites; no son miles de procesos concurrentes.</div>
  <button class="agent-run" id="agentRun">Iniciar equipo de agentes →</button>
+ <div class="panelhead"><span>Cola de tareas guardada</span><span class="pill" id="agentQueueCount">0 PENDIENTES</span></div>
+ <div class="agent-run-meta">La cola se conserva en este navegador y permite continuar manualmente después de recargar. No ejecuta tareas en segundo plano ni sincroniza entre dispositivos.</div>
+ <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="github-btn" id="agentQueueAdd" type="button">＋ Guardar tarea en cola</button><button class="github-btn" id="agentQueueNext" type="button">Ejecutar siguiente</button></div>
+ <div id="agentQueueList" class="agent-history"><div class="empty">No hay tareas en cola.</div></div>
  <button class="agent-cancel hidden" id="agentCancel">Cancelar ejecución</button>
  <div class="agent-progress"><span id="agentProgressBar"></span></div>
  <div id="agentStages"><div class="empty">Los especialistas aparecerán al iniciar una tarea.</div></div>
@@ -533,6 +537,16 @@ async function runAgentTeam(){
   $('#agentOutput').insertAdjacentHTML('beforeend','<div class="agent-warning">'+esc(err.message||'La ejecución no pudo completarse.')+'</div>');
  }finally{agentController=null;$('#agentRun').disabled=false;$('#agentCancel').classList.add('hidden')}
 }
+
+const AGENT_QUEUE_KEY='nexus-agent-queue-v1';
+let agentQueue=loadAgentQueue(),agentQueueBusy=false;
+function loadAgentQueue(){try{const q=JSON.parse(localStorage.getItem(AGENT_QUEUE_KEY)||'[]');return Array.isArray(q)?q.filter(x=>x&&typeof x.id==='string'&&typeof x.task==='string').slice(0,50).map(x=>({...x,status:x.status==='running'?'queued':x.status})):[]}catch{return []}}
+function persistAgentQueue(){try{localStorage.setItem(AGENT_QUEUE_KEY,JSON.stringify(agentQueue.slice(0,50)))}catch{toast('No se pudo guardar la cola: libera espacio del navegador')}}
+function renderAgentQueue(){const el=$('#agentQueueList'),pending=agentQueue.filter(x=>x.status==='queued').length;$('#agentQueueCount').textContent=pending+' PENDIENTES';$('#agentQueueNext').disabled=agentQueueBusy||pending===0;el.innerHTML=agentQueue.length?agentQueue.map(x=>'<div class="agent-run-record"><div style="font-size:11px;font-weight:700">'+esc(x.task.slice(0,110))+'</div><div class="agent-run-meta">'+new Date(x.createdAt).toLocaleString('es-CL')+' · '+(x.status==='queued'?'En espera':x.status==='completed'?'Completada':x.status==='failed'?'Error':'Cancelada')+'</div><div class="agent-run-actions">'+(x.status==='queued'?'<button class="github-btn" data-queue-run="'+esc(x.id)+'">Ejecutar</button>':'')+'<button class="github-btn" data-queue-remove="'+esc(x.id)+'">Quitar</button></div></div>').join(''):'<div class="empty">No hay tareas en cola.</div>';el.querySelectorAll('[data-queue-run]').forEach(b=>b.onclick=()=>runQueuedAgent(b.dataset.queueRun));el.querySelectorAll('[data-queue-remove]').forEach(b=>b.onclick=()=>{agentQueue=agentQueue.filter(x=>x.id!==b.dataset.queueRemove);persistAgentQueue();renderAgentQueue()})}
+function addAgentQueueTask(){const task=$('#agentTask').value.trim().slice(0,8000);if(!task){toast('Escribe primero la tarea que quieres guardar');$('#agentTask').focus();return}if(agentQueue.length>=50){toast('La cola local admite hasta 50 tareas');return}agentQueue.push({id:'queue-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),task,status:'queued',createdAt:new Date().toISOString()});persistAgentQueue();renderAgentQueue();toast('Tarea guardada en la cola local')}
+async function runQueuedAgent(id){if(agentQueueBusy||agentController)return;const item=agentQueue.find(x=>x.id===id&&x.status==='queued');if(!item)return;agentQueueBusy=true;item.status='running';item.startedAt=new Date().toISOString();persistAgentQueue();renderAgentQueue();$('#agentTask').value=item.task;try{await runAgentTeam();const run=agentRunHistory[0];item.status=run&&run.status==='completed'?'completed':run&&run.status==='cancelled'?'cancelled':'failed';item.runId=run&&run.id||null;item.error=run&&run.error||''}catch(err){item.status='failed';item.error=String(err.message||err)}finally{item.finishedAt=new Date().toISOString();agentQueueBusy=false;persistAgentQueue();renderAgentQueue()}}
+$('#agentQueueAdd').onclick=addAgentQueueTask;$('#agentQueueNext').onclick=()=>{const next=agentQueue.find(x=>x.status==='queued');if(next)runQueuedAgent(next.id)};renderAgentQueue();
+
 $('#agentRun').onclick=runAgentTeam;
 $('#clearAgentHistory').onclick=()=>{if(!agentRunHistory.length)return;if(!confirm('¿Eliminar el historial de ejecuciones guardado en este navegador?'))return;agentRunHistory=[];persistAgentRunHistory();renderAgentRunHistory();toast('Historial de ejecuciones eliminado')};
 renderAgentProposals();renderAgentRunHistory();
