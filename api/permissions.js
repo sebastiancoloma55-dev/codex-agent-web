@@ -5,7 +5,7 @@ const POLICY = Object.freeze({
   mode: "restricted",
   capabilities: [
     { id: "chat", label: "Enviar consultas a modelos de IA", allowed: true, scope: "Solo mensajes y contexto que envías" },
-    { id: "multi_agent_analysis", label: "Orquestar equipo de agentes especialistas", allowed: true, scope: "Hasta 8 consultas secuenciales al proveedor configurado; hasta 12 perfiles de especialidad asignados por proyecto enriquecen el contexto. No son workers independientes." },
+    { id: "multi_agent_analysis", label: "Orquestar equipo de agentes especialistas", allowed: true, scope: "Planificador, especialistas con hasta 3 consultas simultáneas y supervisor final (según tamaño del equipo); máximo 8 llamadas por ejecución. Se ejecuta mientras la pestaña permanece abierta; no es una cola persistente ni workers cloud. Cada llamada puede consumir cuota o generar costo según proveedor." },
     { id: "agent_registry", label: "Asignar perfiles especialistas por proyecto", allowed: true, scope: "Catálogo local de 1.000 perfiles lógicos; hasta 12 asignaciones por proyecto, guardadas en este navegador" },
     { id: "github_public_read", label: "Explorar repositorios GitHub públicos", allowed: true, scope: "Solo lectura pública desde el explorador; sin OAuth, repositorios privados ni escrituras" },
     { id: "read_uploads", label: "Leer archivos adjuntos", allowed: true, scope: "Lectura local en el navegador; el texto se envía al proveedor elegido" },
