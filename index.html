@@ -110,6 +110,21 @@
   .hint{display:none}
 }
 
+
+.image-studio-btn{background:#2b3020;border:1px solid #59683a;color:#e5f5b5;border-radius:8px;padding:7px 10px;font-size:12px}
+.image-modal{position:fixed;inset:0;z-index:9000;background:#08090df2;display:grid;place-items:center;padding:16px;overflow:auto}
+.image-modal-card{width:min(760px,100%);max-height:94dvh;overflow:auto;background:#17181d;border:1px solid #383b43;border-radius:18px;padding:20px;box-shadow:0 24px 80px #000b}
+.image-modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.image-modal-card h2{font-size:20px;margin:0}.image-modal-card p{color:#a5a8b2;font-size:12px;margin:6px 0 14px}
+.image-modal-card label{display:block;font-size:12px;color:#d5d7de;margin:12px 0 6px}
+.image-modal-card input,.image-modal-card textarea{width:100%;background:#101114;border:1px solid #3b3e47;color:#f2f3f5;border-radius:9px;padding:10px}
+.image-modal-card textarea{min-height:90px;resize:vertical}
+.image-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.image-actions button{border:0;border-radius:9px;padding:10px 14px;font-weight:700}
+.image-primary{background:var(--accent);color:#15170f}.image-secondary{background:#292c33;color:#e6e8ed}
+.image-preview{display:block;max-width:100%;max-height:48vh;margin:14px auto 0;border-radius:10px;object-fit:contain}
+.image-status{font-size:12px;color:#c9d5a4;margin-top:10px;white-space:pre-wrap}
+@media(max-width:700px){.image-modal-card{padding:16px;border-radius:14px}.image-studio-btn{font-size:12px;padding:11px 10px}}
+
 </style>
 </head>
 <body>
@@ -139,7 +154,7 @@
 <div class="chatlog" id="chatlog" aria-live="polite"></div>
 </section>
 <div class="composer-wrap"><div style="width:min(760px,100%)">
-<div class="composer"><textarea id="prompt" placeholder="Describe lo que quieres construir…" rows="2"></textarea><div class="composer-bottom"><button class="toolbtn" id="attachBtn">＋ Adjuntar archivos</button><button class="toolbtn" id="planBtn">☷ Plan</button><select class="model-select" id="providerSelect" aria-label="Proveedor de IA"><option value="openrouter">OpenRouter · Gratis</option><option value="anthropic">Claude</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select><select class="model-select" id="modelSelect" aria-label="Modelo"></select><button class="send" id="sendBtn">Enviar ↑</button></div></div>
+<div class="composer"><textarea id="prompt" placeholder="Describe lo que quieres construir…" rows="2"></textarea><div class="composer-bottom"><button class="toolbtn" id="attachBtn">＋ Adjuntar archivos</button><button class="image-studio-btn" id="imageStudioOpen">✦ Image Studio</button><button class="toolbtn" id="planBtn">☷ Plan</button><select class="model-select" id="providerSelect" aria-label="Proveedor de IA"><option value="openrouter">OpenRouter · Gratis</option><option value="anthropic">Claude</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select><select class="model-select" id="modelSelect" aria-label="Modelo"></select><button class="send" id="sendBtn">Enviar ↑</button></div></div>
 <div class="hint">NEXUS AI · Revisa las respuestas antes de tomar decisiones importantes.</div>
 </div></div>
 </main>
@@ -200,7 +215,7 @@
 <div class="notice">Los archivos se leen localmente. Al enviar una consulta, el texto adjunto se comparte con el proveedor de IA configurado para analizarlo.</div>
 </aside>
 </div>
-<div id="toast" class="toast hidden"></div>
+<div id="imageStudio" class="image-modal hidden" role="dialog" aria-modal="true" aria-labelledby="imageStudioTitle"><div class="image-modal-card"><div class="image-modal-head"><h2 id="imageStudioTitle">✦ NEXUS IMAGE STUDIO</h2><button class="image-secondary" id="imageStudioClose" type="button">Cerrar ✕</button></div><p>Sube una fotografía y describe la edición. El sistema conserva la imagen original y genera un resultado nuevo.</p><label for="imageStudioFile">Fotografía (PNG, JPG o WebP · máximo 8 MB)</label><input id="imageStudioFile" type="file" accept="image/png,image/jpeg,image/webp"><label for="imageStudioPrompt">¿Qué quieres cambiar?</label><textarea id="imageStudioPrompt" maxlength="4000" placeholder="Ej.: Convierte esta imagen en una fotografía editorial realista de moda, mantén la identidad y los rasgos de la persona adulta, cambia el fondo por un estudio profesional..."></textarea><div class="image-actions"><button class="image-primary" id="imageStudioGenerate" type="button">Generar edición</button><button class="image-secondary" id="imageStudioDownload" type="button" disabled>Guardar imagen</button></div><div class="image-status" id="imageStudioStatus" role="status">La edición requiere configurar OPENAI_API_KEY como variable privada en Vercel.</div><img id="imageStudioResult" class="image-preview hidden" alt="Resultado de edición generado"></div></div><div id="toast" class="toast hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"}</script>
@@ -593,6 +608,31 @@ async function addFiles(list){
  }
  if(added)toast('Archivos añadidos; revisa su vista previa');
 }
+
+let nexusEditedImageUrl="";
+$('#imageStudioOpen').onclick=()=>{$('#imageStudio').classList.remove('hidden');$('#imageStudioStatus').textContent='Selecciona una fotografía y escribe tu instrucción.'};
+$('#imageStudioClose').onclick=()=>$('#imageStudio').classList.add('hidden');
+$('#imageStudio').addEventListener('click',e=>{if(e.target===$('#imageStudio'))$('#imageStudio').classList.add('hidden')});
+$('#imageStudioDownload').onclick=()=>{if(!nexusEditedImageUrl)return;const a=document.createElement('a');a.href=nexusEditedImageUrl;a.download='nexus-image-edit.png';a.click()};
+$('#imageStudioGenerate').onclick=async()=>{
+ const file=$('#imageStudioFile').files[0],instruction=$('#imageStudioPrompt').value.trim(),status=$('#imageStudioStatus'),button=$('#imageStudioGenerate');
+ if(!file){status.textContent='Primero selecciona una fotografía.';return}
+ if(!instruction){status.textContent='Describe qué quieres cambiar.';return}
+ if(file.size>8*1024*1024){status.textContent='La fotografía supera el máximo de 8 MB.';return}
+ if(!['image/png','image/jpeg','image/webp'].includes(file.type)){status.textContent='Formato no compatible. Usa PNG, JPG o WebP.';return}
+ button.disabled=true;button.textContent='Editando…';status.textContent='Enviando la fotografía al modelo de edición…';
+ try{
+  const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('No se pudo leer la fotografía.'));reader.readAsDataURL(file)});
+  const response=await fetch('/api/images',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:instruction,image:dataUrl,mimeType:file.type,fileName:file.name})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||'No se pudo generar la edición.');
+  nexusEditedImageUrl=data.image;$('#imageStudioResult').src=data.image;$('#imageStudioResult').classList.remove('hidden');$('#imageStudioDownload').disabled=false;
+  status.textContent='Edición completada. '+(data.revisedPrompt?'\nInstrucción interpretada: '+data.revisedPrompt:'');
+  logActivity('Imagen editada con NEXUS IMAGE STUDIO');
+ }catch(error){status.textContent=error.message||'Error al editar la fotografía.'}
+ finally{button.disabled=false;button.textContent='Generar edición'}
+};
+
 $('#sendBtn').onclick=send;promptBox.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});$('#newTask').onclick=reset;$('#clearBtn').onclick=reset;$('#attachBtn').onclick=()=>$('#fileInput').click();$('#uploadTop').onclick=()=>$('#fileInput').click();$('#browseBtn').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=e=>{addFiles(e.target.files);e.target.value=''};$$('.suggestion').forEach(b=>b.onclick=()=>{promptBox.value=b.dataset.prompt;promptBox.focus()});$('#planBtn').onclick=()=>{promptBox.value='Crea un plan de implementación con pasos, riesgos y criterios de aceptación para: ';promptBox.focus()};$('#filesNav').onclick=()=>{$('#dropzone').scrollIntoView({behavior:'smooth',block:'center'});toast('Añade archivos al contexto')};$('#reviewNav').onclick=()=>{$('#agentTask').scrollIntoView({behavior:'smooth',block:'center'});$('#agentTask').focus()};const dz=$('#dropzone');['dragenter','dragover'].forEach(e=>dz.addEventListener(e,x=>{x.preventDefault();dz.style.borderColor='var(--accent)'}));['dragleave','drop'].forEach(e=>dz.addEventListener(e,x=>{x.preventDefault();dz.style.borderColor='';if(e==='drop')addFiles(x.dataTransfer.files)}));logActivity('Espacio de trabajo iniciado');
 
 async function checkNexusSession(){
