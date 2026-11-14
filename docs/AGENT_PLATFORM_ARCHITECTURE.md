@@ -5,6 +5,9 @@
 - Chat multimodelo con autenticación privada compartida.
 - Explorador GitHub público en modo lectura.
 - Orquestación secuencial configurable de 4, 6 u 8 especialistas.
+- Directorio local de 1.000 perfiles lógicos de especialidad (10 roles × 10 dominios × 10 enfoques), con búsqueda y asignación de hasta 12 perfiles por proyecto.
+- Las asignaciones se guardan por proyecto en el navegador y se inyectan como contexto especializado al equipo multiagente; no crean 1.000 procesos ni llamadas independientes.
+- Estado visible de conectores: GitHub público en lectura mediante el explorador existente; Vercel, repositorios privados y demás plataformas aún no conectados.
 - Roles base: planificación, ingeniería, seguridad y QA.
 - Roles ampliados: arquitectura, backend, frontend/UX y supervisión final.
 - Cada especialista recibe la tarea y los resultados previos como contexto.
@@ -13,6 +16,12 @@
 - Registro local de propuestas y estados pendiente/aprobada/descartada.
 - Exportación local de proyectos, conversaciones, recuerdos y propuestas.
 - Sin escritura en repositorios, ejecución de comandos, sandbox ni despliegues.
+
+## Directorio de agentes por proyecto (implementado en esta etapa)
+
+El catálogo genera 1.000 perfiles lógicos a partir de combinaciones de rol, dominio y enfoque. El usuario puede buscar perfiles, asignar hasta 12 al proyecto activo y quitarlos. Las asignaciones se almacenan en `localStorage` por ID de proyecto y se añaden al contexto del equipo en la siguiente ejecución. Estos perfiles son especializaciones de instrucciones, no agentes autónomos ni workers en ejecución.
+
+El conector GitHub existente continúa limitado a repositorios públicos en modo lectura. No se ha conectado OAuth, GitHub App, Vercel ni otras plataformas. No hay permisos de escritura ni despliegue.
 
 ## Planificador y validación de dependencias (implementado en esta etapa)
 
