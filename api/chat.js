@@ -75,7 +75,8 @@ export default async function handler(req, res) {
   const userContent = (context ? "CONTEXTO ADJUNTO:\n" + context + "\n\n" : "") + message;
 
   try {
-    let reply = "";\n    let resolvedModel = model;
+    let reply = "";
+    let resolvedModel = model;
     if (provider === "anthropic") {
       const key = process.env.ANTHROPIC_API_KEY;
       if (!key) return json(res, 503, { error: "Falta configurar ANTHROPIC_API_KEY en el entorno privado." });
@@ -100,7 +101,8 @@ export default async function handler(req, res) {
       });
       const data = await upstream.json();
       if (!upstream.ok) return json(res, 502, { error: data.error?.message || "El proveedor de IA devolvió un error." });
-      reply = data.choices?.[0]?.message?.content || "";\n      if (isRouter && typeof data.model === "string" && data.model.trim()) resolvedModel = data.model.trim();
+      reply = data.choices?.[0]?.message?.content || "";
+      if (isRouter && typeof data.model === "string" && data.model.trim()) resolvedModel = data.model.trim();
     } else if (provider === "gemini") {
       const key = process.env.GEMINI_API_KEY;
       if (!key) return json(res, 503, { error: "Falta configurar GEMINI_API_KEY en el entorno privado." });
