@@ -4,7 +4,7 @@
 
 - Chat multimodelo con autenticación privada compartida.
 - Explorador GitHub público en modo lectura.
-- Orquestación secuencial configurable de 4, 6 u 8 especialistas.
+- Orquestación multiagente configurable de 4, 6 u 8 especialistas: planificador inicial, especialistas ejecutados en paralelo con pool limitado a 3 solicitudes simultáneas y supervisor final cuando el tamaño del equipo lo incluye.
 - Directorio local de 1.000 perfiles lógicos de especialidad (10 roles × 10 dominios × 10 enfoques), con búsqueda y asignación de hasta 12 perfiles por proyecto.
 - Las asignaciones se guardan por proyecto en el navegador y se inyectan como contexto especializado al equipo multiagente; no crean 1.000 procesos ni llamadas independientes.
 - Estado visible de conectores: GitHub público en lectura mediante el explorador existente; Vercel, repositorios privados y demás plataformas aún no conectados.
@@ -25,7 +25,7 @@ El conector GitHub existente continúa limitado a repositorios públicos en modo
 
 ## Planificador y validación de dependencias (implementado en esta etapa)
 
-El plan estructurado asigna IDs `ST-1` a `ST-8`. El validador local comprueba referencias inexistentes, dependencias propias y ciclos; calcula las subtareas disponibles al inicio y un orden topológico posible. No añade llamadas al modelo. La interfaz presenta el resultado como simulación: todavía no ejecuta cada subtarea como trabajo independiente ni programa concurrencia real.
+El plan estructurado asigna IDs `ST-1` a `ST-8`. El validador local comprueba referencias inexistentes, dependencias propias y ciclos y calcula un orden topológico. Tras validar, las subtareas se entregan a especialistas independientes en un pool del navegador con concurrencia máxima de 3 llamadas a `/api/chat`; los resultados se guardan progresivamente en el historial local. El supervisor final consolida resultados cuando forma parte del equipo. Esto es ejecución concurrente acotada durante la sesión del navegador, no una cola persistente ni workers cloud: cerrar la pestaña interrumpe la ejecución. El límite de 3 reduce ráfagas, pero cada llamada puede consumir cuota o generar costo según el proveedor.
 
 ## Qué significa escalar a cientos o miles de agentes
 
@@ -50,7 +50,7 @@ El número de agentes es una capacidad lógica del planificador; la concurrencia
 
 | Componente | Necesidad | Estado |
 |---|---|---|
-| Cola persistente y coordinación | Mantener tareas y reintentos entre ejecuciones | Pendiente |
+| Cola persistente y coordinación | Mantener tareas y reintentos entre ejecuciones y cierres de sesión | Pendiente |
 | Base de datos y cuentas individuales | Aislar proyectos, usuarios y permisos | Pendiente |
 | Workers server-side | Ejecutar agentes sin depender de la pestaña del navegador | Pendiente |
 | Rate limit y presupuesto distribuido | Evitar abuso y costos descontrolados | Pendiente |
@@ -71,9 +71,9 @@ El número de agentes es una capacidad lógica del planificador; la concurrencia
 
 ## Próximos hitos técnicos recomendados
 
-1. Pruebas automatizadas de la aplicación actual y validación de dependencias.
+1. Pruebas automatizadas de la aplicación actual, incluyendo cancelación y concurrencia acotada.
 2. Contratos de tareas y resultados en JSON con validación de esquema.
-3. Cola persistente con estados `queued`, `running`, `blocked`, `succeeded`, `failed` y `cancelled`.
+3. Cola persistente con estados `queued`, `running`, `blocked`, `succeeded`, `failed` y `cancelled` (requiere almacenamiento/infraestructura autorizados).
 4. Límites globales de concurrencia y presupuesto.
 5. Sandbox efímero sin secretos y con red deshabilitada por defecto.
 6. GitHub App/OAuth con permisos mínimos, diff preview y aprobación explícita.
