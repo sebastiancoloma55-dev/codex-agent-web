@@ -11,11 +11,16 @@
 - Roles base: planificación, ingeniería, seguridad y QA.
 - Roles ampliados: arquitectura, backend, frontend/UX y supervisión final.
 - Cada especialista recibe la tarea y los resultados previos como contexto.
+- Cola local de hasta 50 tareas multiagente, guardada en `localStorage`, con ejecución manual individual y estados básicos.
 - Cancelación de una ejecución desde el navegador.
 - Extracción de bloques `unified diff` generados por el especialista de ingeniería.
 - Registro local de propuestas y estados pendiente/aprobada/descartada.
 - Exportación local de proyectos, conversaciones, recuerdos y propuestas.
 - Sin escritura en repositorios, ejecución de comandos, sandbox ni despliegues.
+
+## Cola local de tareas (implementada en esta etapa)
+
+La cola conserva hasta 50 tareas en `localStorage` del navegador. Permite guardar una tarea, ejecutarla manualmente y conservar estados básicos al recargar. Si la pestaña se cierra durante una ejecución, la tarea en curso vuelve a estado pendiente al reabrir la aplicación; debe iniciarse manualmente. No es una cola cloud, no sincroniza entre dispositivos, no ejecuta en segundo plano y depende del almacenamiento disponible del navegador.
 
 ## Directorio de agentes por proyecto (implementado en esta etapa)
 
@@ -35,7 +40,7 @@ La arquitectura objetivo es jerárquica y basada en trabajos:
 
 1. **Orquestador principal**: recibe el objetivo, valida permisos y crea un plan versionado.
 2. **Descomposición**: divide el plan en tareas pequeñas con entradas, salidas y criterios de aceptación.
-3. **Cola persistente**: almacena tareas, prioridad, dependencias, intentos, propietario, estado y vencimiento.
+3. **Cola persistente cloud**: almacena tareas, prioridad, dependencias, intentos, propietario, estado y vencimiento (no implementada; requiere almacenamiento autorizado).
 4. **Pool de workers**: ejecuta un número configurable de agentes simultáneos; el límite se aplica en servidor, no en el navegador.
 5. **Especialistas**: agentes con rol, herramientas permitidas y contexto mínimo necesario.
 6. **Memoria de trabajo**: resultados estructurados por tarea, referencias a archivos y decisiones; no se comparte todo el historial con todos los agentes.
@@ -50,7 +55,7 @@ El número de agentes es una capacidad lógica del planificador; la concurrencia
 
 | Componente | Necesidad | Estado |
 |---|---|---|
-| Cola persistente y coordinación | Mantener tareas y reintentos entre ejecuciones y cierres de sesión | Pendiente |
+| Cola cloud y coordinación multiusuario | Mantener tareas y reintentos entre dispositivos, usuarios y cierres de sesión | Pendiente; existe solo una cola local en navegador |
 | Base de datos y cuentas individuales | Aislar proyectos, usuarios y permisos | Pendiente |
 | Workers server-side | Ejecutar agentes sin depender de la pestaña del navegador | Pendiente |
 | Rate limit y presupuesto distribuido | Evitar abuso y costos descontrolados | Pendiente |
