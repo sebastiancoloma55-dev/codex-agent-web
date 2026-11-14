@@ -1,7 +1,7 @@
 import { requireSession } from "./auth.js";
 
-const json = (res, status, body) => res.status(status).setHeader("Cache-Control","no-store").json(body);
-const MAX_BYTES = 8 * 1024 * 1024;
+const json = (res, status, body) => { res.setHeader("Cache-Control","no-store"); return res.status(status).json(body); };
+export const config = { api: { bodyParser: { sizeLimit: "12mb" } } };\n\nconst MAX_BYTES = 8 * 1024 * 1024;
 const TYPES = new Set(["image/png","image/jpeg","image/webp"]);
 const replaceTokens = (value, replacements) => {
   if (typeof value === "string") return replacements[value] ?? value;
