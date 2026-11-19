@@ -373,7 +373,6 @@ async function send(){
   currentMessages.push({role:'assistant',text:b.textContent});
   saveCurrent();
   logActivity(missingKey?'Falta configurar la clave del proveedor':'Error de conexión con IA');
- }
  }finally{
   isSending=false;
   sendButton.disabled=false;
