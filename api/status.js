@@ -1,3 +1,5 @@
+import { requireNexusUser } from "./_lib/require-user.js";
+
 const json = (res, status, body) => {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -9,6 +11,8 @@ export default function handler(req, res) {
     res.setHeader("Allow", "GET");
     return json(res, 405, { error: "Método no permitido." });
   }
+  const user = await requireNexusUser(req, res);
+  if (!user) return;
   const paidProvidersEnabled = process.env.NEXUS_ENABLE_PAID_PROVIDERS === "true";
   return json(res, 200, {
     providers: {
@@ -18,7 +22,7 @@ export default function handler(req, res) {
       gemini: paidProvidersEnabled && Boolean(process.env.GEMINI_API_KEY)
     },
     imageGeneration: Boolean(paidProvidersEnabled && process.env.OPENAI_API_KEY && process.env.NEXUS_IMAGES_ENABLED === "true"),
-    mode: "open",
+    mode: "asistencia-sso",
     commit: process.env.VERCEL_GIT_COMMIT_SHA || null
   });
 }
