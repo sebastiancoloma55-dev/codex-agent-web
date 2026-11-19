@@ -256,6 +256,16 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const chat=$('#chatlog'), promptBox=$('#prompt'), welcome=$('#welcome'), fileList=$('#filelist'), activity=$('#activity');
 let isSending=false, files=[], taskCount=0, activities=[], currentMessages=[], currentConversationId=null, conversations=loadConversations(), projects=loadProjects(), memories=loadMemories(), currentProjectId='default';
+let nexusAccessToken = null;
+function requestAsistenciaSession(){try{const origin=new URL(document.referrer).origin;if(["https://asistencia-doctor-simi2026-nt80gj24i-simi23.vercel.app","https://asistencia-doctor-simi2026-git-feat-integracion-n-2b10e9-simi23.vercel.app"].includes(origin))window.parent.postMessage({type:'NEXUS_SSO_REFRESH'},origin);}catch{}}
+async function nexusFetch(url,options={}){
+ if(!nexusAccessToken)throw new Error('Abre NEXUS desde Asistencia Doctor Simi para validar tu sesión.');
+ const headers=new Headers(options.headers||{});headers.set('Authorization','Bearer '+nexusAccessToken);
+ const response=await fetch(url,{...options,headers,credentials:'omit',cache:'no-store'});
+ if(response.status===401){requestAsistenciaSession();throw new Error('Tu sesión venció. Estamos solicitando renovar el acceso desde Asistencia.');}
+ return response;
+}
+
 const modelOptions={openrouter:[['openrouter/free','Modelo gratuito disponible']],anthropic:[['claude-haiku-5-5','Claude Haiku 5.5'],['claude-sonnet-5-5','Claude Sonnet 5.5']],openai:[['gpt-6-luna','GPT-6 Luna'],['gpt-6.2-sol','GPT-6.2 Sol']],gemini:[['gemini-3.5-flash-lite','Gemini 3.5 Flash-Lite'],['gemini-3.8-flash','Gemini 3.8 Flash']]};
 
 function loadProjects(){try{return JSON.parse(localStorage.getItem('nexus-projects')||'[{"id":"default","name":"Mi espacio"}]')}catch{return [{id:'default',name:'Mi espacio'}]}}
@@ -282,7 +292,7 @@ $('#providerSelect').addEventListener('change',updateModels);updateModels();
 async function loadProviderStatus(){
  const status=$('#providerStatus');
  try{
-  const response=await fetch('/api/status',{method:'GET',cache:'no-store'});
+  const response=await nexusFetch('/api/status',{method:'GET',cache:'no-store'});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.providers)throw new Error('No se pudo consultar la disponibilidad de proveedores.');
   const options=[...$('#providerSelect').options];
@@ -345,7 +355,7 @@ async function send(){
  const context=(memoryContext?'MEMORIA DEL USUARIO:\n'+memoryContext+'\n\n':'')+fileContext.join('\n\n---\n\n');
  const images=files.filter(f=>f.imageData).map(f=>({name:f.name,data:f.imageData}));
  try{
-  const res=await fetch('/api/chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context,history:currentMessages.slice(-10,-2).filter(m=>m.text).map(m=>({role:m.role,content:m.text})),provider:$('#providerSelect').value,model:$('#modelSelect').value,images,stream:true})});
+  const res=await nexusFetch('/api/chat',{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context,history:currentMessages.slice(-10,-2).filter(m=>m.text).map(m=>({role:m.role,content:m.text})),provider:$('#providerSelect').value,model:$('#modelSelect').value,images,stream:true})});
   if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'No se pudo conectar con el proveedor de IA.');}
   if(res.headers.get('content-type')?.includes('text/event-stream')){
    b.textContent='';
@@ -773,14 +783,59 @@ $('#sendBtn').onclick=send;promptBox.addEventListener('keydown',e=>{if(e.key==='
 async function loadPermissionPolicy(){
  const panel=$('#permissionPanel');
  try{
-  const response=await fetch('/api/permissions',{method:'GET',credentials:'same-origin',cache:'no-store'});
+  const response=await nexusFetch('/api/permissions',{method:'GET',credentials:'omit',cache:'no-store'});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||'No se pudo cargar la política.');
   panel.innerHTML='<div class="permission-list">'+data.capabilities.map(item=>'<div class="permission-row"><span class="permission-dot '+(item.allowed?'allowed':'')+'"></span><div class="permission-copy"><b>'+esc(item.label)+'</b><small>'+esc(item.scope)+'</small></div><span class="permission-state '+(item.allowed?'allowed':'')+'">'+(item.allowed?'PERMITIDO':'BLOQUEADO')+'</span></div>').join('')+'</div>';
  }catch(err){panel.textContent=err.message||'No se pudo consultar la política de permisos.'}
 }
 $('#permissionsNav').onclick=()=>{$('#permissionPanel').scrollIntoView({behavior:'smooth',block:'center'});loadPermissionPolicy()};
-loadPermissionPolicy();loadProviderStatus();
+
+const NEXUS_ALLOWED_ASISTENCIA_ORIGINS=["https://asistencia-doctor-simi2026-nt80gj24i-simi23.vercel.app","https://asistencia-doctor-simi2026-git-feat-integracion-n-2b10e9-simi23.vercel.app"];
+function showNexusSsoGate(message){
+ let gate=document.getElementById('nexus-sso-gate');
+ if(!gate){
+  gate=document.createElement('div');gate.id='nexus-sso-gate';
+  gate.style.cssText='position:fixed;inset:0;z-index:20000;display:grid;place-items:center;padding:22px;background:rgba(5,9,20,.97);backdrop-filter:blur(18px);color:#f3f6ff;font:14px/1.6 Inter,system-ui,sans-serif;text-align:center';
+  gate.innerHTML='<div style="width:min(460px,100%);padding:30px;border:1px solid #6475a855;border-radius:20px;background:#121d32;box-shadow:0 24px 80px #0008"><div style="font-size:12px;letter-spacing:2px;color:#65dff1;font-weight:800">NEXUS AI · ACCESO SEGURO</div><h2 style="font-size:26px;margin:12px 0 8px">Conectando con Asistencia</h2><p id="nexus-sso-message" style="color:#a8b6d2;margin:0">Validando tu sesión…</p></div>';
+  document.body.appendChild(gate);
+ }
+ const label=document.getElementById('nexus-sso-message');if(label)label.textContent=message||'Validando tu sesión…';
+ gate.style.display='grid';
+}
+function hideNexusSsoGate(){const gate=document.getElementById('nexus-sso-gate');if(gate)gate.remove();}
+async function acceptAsistenciaSession(token){
+ if(typeof token!=='string'||token.length<20)return;
+ nexusAccessToken=token;
+ try{
+  const response=await fetch('/api/auth',{method:'GET',headers:{Authorization:'Bearer '+token},credentials:'omit',cache:'no-store'});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.authenticated)throw new Error(data.error||'No tienes permiso para utilizar NEXUS AI.');
+  hideNexusSsoGate();
+  logActivity('Sesión de Asistencia verificada');
+  await Promise.all([loadPermissionPolicy(),loadProviderStatus()]);
+ }catch(error){
+  nexusAccessToken=null;
+  showNexusSsoGate(error.message||'No fue posible verificar tu sesión.');
+ }
+}
+function initializeNexusSso(){
+ showNexusSsoGate('Esperando la sesión de Asistencia Doctor Simi…');
+ window.addEventListener('message',function(event){
+  if(!NEXUS_ALLOWED_ASISTENCIA_ORIGINS.includes(event.origin)||event.source!==window.parent)return;
+  if(event.data&&event.data.type==='ASISTENCIA_SSO'&&event.data.accessToken)acceptAsistenciaSession(event.data.accessToken);
+  if(event.data&&event.data.type==='ASISTENCIA_SSO_REVOKED'){nexusAccessToken=null;showNexusSsoGate('Tu sesión de Asistencia se cerró. Ingresa nuevamente para continuar.');}
+ });
+ if(window.parent!==window){
+  let parentOrigin='';try{parentOrigin=new URL(document.referrer).origin}catch{}
+  if(NEXUS_ALLOWED_ASISTENCIA_ORIGINS.includes(parentOrigin))window.parent.postMessage({type:'NEXUS_SSO_READY'},parentOrigin);
+  else showNexusSsoGate('Abre NEXUS desde el módulo correspondiente de Asistencia Doctor Simi.');
+ }else{
+  showNexusSsoGate('Por seguridad, abre NEXUS AI desde el menú de Asistencia Doctor Simi.');
+ }
+}
+
+initializeNexusSso();
 
 </script>
 </body></html>
