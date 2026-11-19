@@ -120,4 +120,10 @@ jobs:
           assert "roj" in answer or "red" in answer, f"Image understanding mismatch: {answer!r}"
           print("Real image understanding OK:", answer)
           PY
+      - name: Run mobile browser end-to-end test
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install --with-deps chromium
+          node tests/preview-e2e.mjs
 
