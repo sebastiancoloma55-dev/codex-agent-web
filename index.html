@@ -110,13 +110,55 @@
   .hint{display:none}
 }
 
+
+/* NEXUS FUTURE UI — visual refresh */
+:root{color-scheme:dark;--bg:#080b16;--panel:rgba(17,24,43,.82);--panel2:#151e35;--line:rgba(139,160,210,.16);--text:#f3f6ff;--muted:#9aa8c5;--accent:#8b7cff;--accent2:#35d9ed;--blue:#67c9ff;--danger:#ff8eaa}
+body{background:radial-gradient(ellipse at 48% -15%,#28376a 0%,transparent 42%),radial-gradient(ellipse at 100% 75%,#142d52 0%,transparent 34%),#080b16;letter-spacing:.01em}
+.app{grid-template-columns:264px minmax(0,1fr) 316px;gap:0}
+.sidebar,.inspector{background:rgba(9,14,29,.78);backdrop-filter:blur(22px);border-color:var(--line);padding:22px 18px}
+.brand{font-size:19px;letter-spacing:.4px}.mark{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#a69aff,#3bdcf0);color:#09101e;box-shadow:0 0 26px #8074ff55}
+.pill{border-color:#6572aa66;background:#7885ff12;color:#b9c8ff}
+.newtask,.send,.agent-run{background:linear-gradient(105deg,#8d7bff,#45d9eb);color:#07111e;border:0;box-shadow:0 8px 26px #7668ff2b;transition:transform .18s,filter .18s}
+.newtask:hover,.send:hover,.agent-run:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.navitem{border:1px solid transparent;border-radius:11px;padding:10px 11px;color:#aab7d4}.navitem.active,.navitem:hover{background:linear-gradient(100deg,#7669ff20,#38d9ed12);border-color:#8d8aff35;color:#fff}
+.navtitle,.sectiontitle{color:#8495bb;letter-spacing:1.4px}.profile{border-color:var(--line)}.avatar{background:linear-gradient(140deg,#354c80,#5d4a9a);color:#fff}
+main{background:linear-gradient(180deg,#10182c35,transparent 45%)}
+.topbar{height:68px;border-color:var(--line);background:#0c1325a8;backdrop-filter:blur(16px);padding:0 28px}
+.crumb{color:#9aabcf}.top-actions .ghost,.ghost{background:#17223a99;border:1px solid #7d91c52b;border-radius:10px;color:#dce6ff}
+.workspace{padding:34px 28px 18px}.welcome{width:min(820px,100%);margin:auto 0}
+.eyebrow{color:#65dff1;letter-spacing:1.8px}.dot{background:#5ee7f3;box-shadow:0 0 13px #5ee7f3}
+h1{font-size:clamp(34px,4.6vw,56px);letter-spacing:-2.2px;line-height:1.05;margin:20px 0 14px}
+h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:#a8b6d2;font-size:16px;max-width:560px}.suggestions{gap:12px}
+.suggestion{background:linear-gradient(145deg,#182541c9,#111b31c9);border:1px solid #8498d32b;border-radius:16px;padding:17px;box-shadow:0 12px 28px #02071433;transition:all .2s}
+.suggestion:hover{border-color:#8d8aff99;background:linear-gradient(145deg,#242d50,#142c42);transform:translateY(-3px);box-shadow:0 14px 34px #655dff22}
+.suggestion b{font-size:14px;color:#edf2ff}.suggestion span{color:#9caecc}
+.chatlog{width:min(820px,100%);gap:20px}.message{gap:13px}.msgavatar{border-radius:12px;background:#202d4b;color:#dce5ff}
+.message.assistant .msgavatar{background:linear-gradient(135deg,#a294ff,#4ce0ed);color:#081323}
+.bubble{background:#18233bc9;border:1px solid #8094c32b;border-radius:5px 16px 16px 16px;padding:14px 17px}
+.message.assistant .bubble{color:#e5ebfb;background:#121d32a8;border:1px solid #8094c31d;border-radius:4px 16px 16px 16px;padding:14px 17px}
+.message.user .bubble{background:linear-gradient(120deg,#4c4c9a,#245c79);border:1px solid #a7c4ff44;color:#fff}
+.composer-wrap{padding:12px 28px 20px}.composer{width:min(820px,100%);border:1px solid #8c9bda55;background:rgba(16,25,46,.94);border-radius:20px;padding:14px;box-shadow:0 16px 55px #0007,0 0 0 4px #7185ff0a}
+.composer:focus-within{border-color:#8c83ff;box-shadow:0 16px 55px #0007,0 0 0 4px #8c83ff20}
+.composer textarea{color:#f3f6ff}.toolbtn{background:#202d49;border:1px solid #91a5dc30;border-radius:10px;color:#cbd8f5}
+.model-select{background:#1a2742;border:1px solid #8096ce45;color:#e7edff;border-radius:10px}
+.hint{color:#7788aa}.inspector{gap:16px}.panelhead{color:#e1e9ff}
+.status{background:#123a3c66;border-color:#39d9d080;color:#75e9dc}
+.repo,.github-explorer,.agent-orchestrator{background:linear-gradient(145deg,#17233dc9,#101a2fc9);border:1px solid #8296ca2b;border-radius:15px;box-shadow:0 12px 30px #0207142b}
+.github-explorer input,.agent-orchestrator textarea{background:#0c1426;border-color:#52658c77;color:#edf3ff;border-radius:9px}
+.github-btn{background:#202d49;border:1px solid #8298ce45;border-radius:9px;color:#dce8ff}
+.dropzone{border-color:#7185c977;background:#8d8aff09;border-radius:13px}
+.activity,.activityitem{border-color:var(--line)}.recent button.selected,.recent button:hover{background:#29365a;color:#fff}
+.toast{background:linear-gradient(100deg,#b3a8ff,#6be7ef);color:#081323;border-radius:12px}
+.auth-logout{display:none}
+@media(max-width:1050px){.app{grid-template-columns:232px minmax(0,1fr)}}
+@media(max-width:700px){.app{grid-template-columns:minmax(0,1fr);min-height:100dvh;height:100dvh}.topbar{height:58px;padding:0 15px}.workspace{padding:24px 15px 12px}.composer-wrap{padding:8px 12px 14px}.suggestions{grid-template-columns:1fr}h1{font-size:37px;letter-spacing:-1.6px}.sub{font-size:14px}.composer{border-radius:17px}.composer-bottom{gap:6px}.toolbtn{font-size:12px;padding:9px}.model-select{font-size:11px;max-width:116px;padding:8px}}
 </style>
 </head>
 <body>
-<div class="auth-overlay" id="authOverlay"><div class="auth-card"><div class="auth-brand"><span class="auth-mark">N</span> NEXUS AI</div><h1 id="authTitle">Acceso privado</h1><p id="authDescription">Ingresa tu contraseña para abrir tu espacio de trabajo.</p><form id="authForm"><label for="authPassword">Contraseña de acceso</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña" required maxlength="256"><button class="auth-submit" id="authSubmit" type="submit">Entrar a NEXUS</button></form><div class="auth-error" id="authError" role="alert"></div><div class="auth-foot">Sesión privada · La contraseña no se guarda en el navegador.</div></div></div>
 <div class="app">
 <aside class="sidebar">
-<div class="brand"><div class="mark">N</div> NEXUS AI <span class="pill">LAB</span></div><button class="auth-logout" id="logoutBtn">↪ Cerrar sesión</button>
+<div class="brand"><div class="mark">N</div> NEXUS AI <span class="pill">LAB</span></div><div class="navitem"><span class="ico">✦</span> <span>Sesión abierta · Personal</span></div>
 <button class="newtask" id="newTask">＋ &nbsp; Nueva tarea</button>
 <div><div class="navtitle">Espacio</div><select id="projectSelect" class="model-select" style="width:100%;max-width:none"><option value="default">Mi espacio</option></select><button class="ghost" id="newProject" style="width:100%">＋ Nuevo proyecto</button><button class="ghost" id="exportData" style="width:100%">↓ Exportar mis datos</button><div class="navitem active"><span class="ico">◈</span> Nueva conversación</div><div class="navitem" id="filesNav"><span class="ico">▤</span> Archivos del contexto</div><div class="navitem" id="reviewNav"><span class="ico">⌘</span> Revisar cambios</div><div class="navitem" id="permissionsNav"><span class="ico">⛨</span> Permisos del agente</div></div>
 <div><div class="navtitle">Recientes</div><div class="recent" id="recent"><div class="empty">Tus conversaciones aparecerán aquí.</div></div></div>
@@ -595,46 +637,7 @@ async function addFiles(list){
 }
 $('#sendBtn').onclick=send;promptBox.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});$('#newTask').onclick=reset;$('#clearBtn').onclick=reset;$('#attachBtn').onclick=()=>$('#fileInput').click();$('#uploadTop').onclick=()=>$('#fileInput').click();$('#browseBtn').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=e=>{addFiles(e.target.files);e.target.value=''};$$('.suggestion').forEach(b=>b.onclick=()=>{promptBox.value=b.dataset.prompt;promptBox.focus()});$('#planBtn').onclick=()=>{promptBox.value='Crea un plan de implementación con pasos, riesgos y criterios de aceptación para: ';promptBox.focus()};$('#filesNav').onclick=()=>{$('#dropzone').scrollIntoView({behavior:'smooth',block:'center'});toast('Añade archivos al contexto')};$('#reviewNav').onclick=()=>{$('#agentTask').scrollIntoView({behavior:'smooth',block:'center'});$('#agentTask').focus()};const dz=$('#dropzone');['dragenter','dragover'].forEach(e=>dz.addEventListener(e,x=>{x.preventDefault();dz.style.borderColor='var(--accent)'}));['dragleave','drop'].forEach(e=>dz.addEventListener(e,x=>{x.preventDefault();dz.style.borderColor='';if(e==='drop')addFiles(x.dataTransfer.files)}));logActivity('Espacio de trabajo iniciado');
 
-async function checkNexusSession(){
- const overlay=$('#authOverlay'),error=$('#authError'),submit=$('#authSubmit'),title=$('#authTitle'),description=$('#authDescription'),password=$('#authPassword');
- try{
-  const response=await fetch('/api/auth',{method:'GET',credentials:'same-origin',cache:'no-store'});
-  const data=await response.json().catch(()=>({}));
-  if(response.ok&&data.authenticated){overlay.style.display='none';return}
-  overlay.style.display='grid';
-  if(!data.configured||response.status===503){
-   title.textContent='Configuración pendiente';
-   description.textContent='La protección está preparada, pero faltan las variables privadas del servidor.';
-   error.textContent=data.error||'Configura NEXUS_ACCESS_PASSWORD y NEXUS_SESSION_SECRET (mínimo 32 caracteres) en el entorno privado.';
-   password.disabled=true;submit.disabled=true;
-  }else{
-   title.textContent='Acceso privado';
-   description.textContent='Ingresa tu contraseña para abrir tu espacio de trabajo.';
-   error.textContent='';password.disabled=false;submit.disabled=false;
-  }
- }catch{
-  overlay.style.display='grid';title.textContent='No se pudo verificar el acceso';
-  description.textContent='Comprueba que la aplicación esté servida desde un entorno compatible.';
-  error.textContent='No se pudo contactar /api/auth.';password.disabled=true;submit.disabled=true;
- }
-}
-$('#authForm').addEventListener('submit',async e=>{
- e.preventDefault();const error=$('#authError'),submit=$('#authSubmit'),password=$('#authPassword');
- submit.disabled=true;submit.textContent='Verificando…';error.textContent='';
- try{
-  const response=await fetch('/api/auth',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:password.value})});
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok)throw new Error(data.error||'No se pudo iniciar sesión.');
-  password.value='';$('#authOverlay').style.display='none';toast('Sesión iniciada');logActivity('Acceso autenticado');
- }catch(err){error.textContent=err.message||'Error de acceso';}
- finally{submit.disabled=false;submit.textContent='Entrar a NEXUS';}
-});
-$('#logoutBtn').onclick=async()=>{
- try{await fetch('/api/auth',{method:'DELETE',credentials:'same-origin'});}catch{}
- $('#authOverlay').style.display='grid';$('#authPassword').disabled=false;$('#authSubmit').disabled=false;$('#authTitle').textContent='Sesión cerrada';$('#authDescription').textContent='Ingresa tu contraseña para volver a entrar.';$('#authError').textContent='';toast('Sesión cerrada');
-};
-checkNexusSession();
-
+// Acceso directo: esta instancia no solicita contraseña ni crea sesiones.
 async function loadPermissionPolicy(){
  const panel=$('#permissionPanel');
  try{
