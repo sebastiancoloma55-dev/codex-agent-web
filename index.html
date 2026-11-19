@@ -156,6 +156,8 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 
 /* NEXUS live thinking indicator */
 .nexus-thinking{display:inline-flex;align-items:center;gap:9px;color:#b9c7ee;font-size:13px;letter-spacing:.1px}.nexus-thinking-dots{display:inline-flex;gap:4px;align-items:center}.nexus-thinking-dots i{display:block;width:5px;height:5px;border-radius:50%;background:#78dff5;animation:nexusPulse 1s infinite ease-in-out}.nexus-thinking-dots i:nth-child(2){animation-delay:.15s}.nexus-thinking-dots i:nth-child(3){animation-delay:.3s}@keyframes nexusPulse{0%,60%,100%{opacity:.28;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+
+#sendBtn:disabled{opacity:.58;cursor:not-allowed;filter:saturate(.55);transform:none!important}#sendBtn[aria-busy=true]{min-width:155px}
 </style>
 </head>
 <body>
@@ -252,7 +254,7 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const chat=$('#chatlog'), promptBox=$('#prompt'), welcome=$('#welcome'), fileList=$('#filelist'), activity=$('#activity');
-let files=[], taskCount=0, activities=[], currentMessages=[], currentConversationId=null, conversations=loadConversations(), projects=loadProjects(), memories=loadMemories(), currentProjectId='default';
+let isSending=false, files=[], taskCount=0, activities=[], currentMessages=[], currentConversationId=null, conversations=loadConversations(), projects=loadProjects(), memories=loadMemories(), currentProjectId='default';
 const modelOptions={openrouter:[['openrouter/free','Modelo gratuito disponible']],anthropic:[['claude-3-5-haiku-latest','Claude Haiku'],['claude-3-7-sonnet-latest','Claude Sonnet']],openai:[['gpt-4o-mini','GPT-4o mini'],['gpt-4o','GPT-4o']],gemini:[['gemini-2.0-flash','Gemini 2.0 Flash'],['gemini-2.5-flash','Gemini 2.5 Flash']]};
 
 function loadProjects(){try{return JSON.parse(localStorage.getItem('nexus-projects')||'[{"id":"default","name":"Mi espacio"}]')}catch{return [{id:'default',name:'Mi espacio'}]}}
@@ -282,8 +284,15 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function addMessage(role,text){welcome.classList.add('hidden');currentMessages.push({role,text});const row=renderMessage(role,text);saveCurrent();$('#workspace').scrollTop=$('#workspace').scrollHeight;return row}
 function responseFor(text){const t=text.toLowerCase();if(t.includes('archivo')||t.includes('proyecto')||t.includes('estructura'))return 'Para analizar un proyecto real, adjunta los archivos relevantes usando “Adjuntar archivos”. En esta versión puedo registrar sus nombres y mostrar el contexto seleccionado, pero aún no envío el contenido a un modelo de IA.\n\nPlan sugerido:\n1. Identificar el punto de entrada y las dependencias.\n2. Mapear los módulos principales.\n3. Definir la tarea y sus criterios de aceptación.\n4. Proponer cambios pequeños y revisables.\n5. Preparar pruebas antes de aplicar modificaciones.';if(t.includes('error')||t.includes('revisa')||t.includes('bug'))return 'Modo de revisión preparado. Para una revisión real necesitamos conectar un modelo de IA y facilitar el código.\n\nCuando se conecte, el flujo será: reproducir el problema → localizar la causa → proponer un parche → revisar el diff → ejecutar pruebas con autorización. Por ahora no se ha inspeccionado ni modificado ningún archivo.';if(t.includes('prueba'))return 'Plan de pruebas inicial:\n1. Caso normal: entrada válida y resultado esperado.\n2. Límites: valores vacíos, tamaños máximos y caracteres especiales.\n3. Errores: dependencia no disponible, permisos insuficientes y tiempos de espera.\n4. Regresión: verificar que el comportamiento anterior siga funcionando.\n5. Evidencia: registrar resultado, pasos y versión.\n\nEste es un ejemplo demostrativo; aún no se ejecutan pruebas.';if(t.includes('plan')||t.includes('funcionalidad'))return 'Plan de implementación sugerido:\n1. Aclarar el comportamiento esperado.\n2. Identificar archivos y dependencias afectadas.\n3. Proponer una solución mínima.\n4. Mostrar un diff para revisión.\n5. Validar con pruebas y documentar resultados.\n\nNota: las modificaciones reales requieren conectar el repositorio y un agente de IA.';return 'He registrado tu solicitud en la sesión de demostración. Para convertirla en una tarea de programación real, el siguiente paso es conectar un proveedor de IA y una fuente de código autorizada.\n\nNo se ha ejecutado código, no se ha conectado a internet y no se han modificado archivos.'}
 async function send(){
+ if(isSending)return;
  const text=promptBox.value.trim();
  if(!text)return;
+ isSending=true;
+ const sendButton=$('#sendBtn');
+ sendButton.disabled=true;
+ sendButton.textContent='NEXUS respondiendo…';
+ sendButton.setAttribute('aria-busy','true');
+ promptBox.setAttribute('aria-disabled','true');
  addMessage('user',text);
  promptBox.value='';
  taskCount++;
@@ -334,6 +343,13 @@ async function send(){
   currentMessages.push({role:'assistant',text:b.textContent});
   saveCurrent();
   logActivity(missingKey?'Falta configurar la clave del proveedor':'Error de conexión con IA');
+ }
+ }finally{
+  isSending=false;
+  sendButton.disabled=false;
+  sendButton.textContent='Enviar ↑';
+  sendButton.removeAttribute('aria-busy');
+  promptBox.removeAttribute('aria-disabled');
  }
 }
 function reset(){chat.innerHTML='';currentMessages=[];currentConversationId=null;welcome.classList.remove('hidden');promptBox.value='';renderRecent();logActivity('Nueva conversación');promptBox.focus()}
