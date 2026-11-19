@@ -57,7 +57,7 @@ function normalizeImages(value) {
     const bytes = Buffer.from(match[2], "base64");
     if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) throw new Error("Cada imagen debe pesar como máximo 1 MB después de optimizarse.");
     total += bytes.length;
-    if (total > 3 * MAX_IMAGE_BYTES) throw new Error("El total de imágenes supera los 3 MB.");
+    if (total > 2 * MAX_IMAGE_BYTES) throw new Error("El total de imágenes supera los 2 MB.");
     return { data: item.data, name: String(item.name || "imagen").slice(0, 120) };
   });
 }
