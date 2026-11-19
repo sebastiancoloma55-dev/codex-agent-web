@@ -1,3 +1,5 @@
+import { requireNexusUser } from "./_lib/require-user.js";
+
 const POLICY = Object.freeze({
   version: 1,
   mode: "open-chat",
@@ -18,11 +20,13 @@ const POLICY = Object.freeze({
   ]
 });
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ error: "Método no permitido." });
   }
-  return res.status(200).json(POLICY);
+  const user = await requireNexusUser(req, res);
+  if (!user) return;
+  return res.status(200).json({ ...POLICY, user });
 }
