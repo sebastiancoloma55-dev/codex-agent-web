@@ -352,7 +352,7 @@ async function send(){
       if(!line.startsWith('data:'))continue;
       const payload=line.slice(5).trim();
       if(!payload||payload==='[DONE]')continue;
-      try{const chunk=JSON.parse(payload);if(chunk.error){b.textContent+=(b.textContent?'\\n\\n':'')+'Aviso de conexión: '+chunk.error;chat.scrollTop=chat.scrollHeight;continue;}const piece=chunk.choices?.[0]?.delta?.content;if(typeof piece==='string'&&piece){b.textContent+=piece;chat.scrollTop=chat.scrollHeight;}}catch{}
+      try{const chunk=JSON.parse(payload);if(chunk.error){b.textContent+=(b.textContent?'\n\n':'')+'Aviso de conexión: '+chunk.error;chat.scrollTop=chat.scrollHeight;continue;}const piece=chunk.choices?.[0]?.delta?.content;if(typeof piece==='string'&&piece){b.textContent+=piece;chat.scrollTop=chat.scrollHeight;}}catch{}
      }
     }
    }
