@@ -6,7 +6,7 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 
 - Interfaz web rebrandeada como NEXUS AI, adaptable a escritorio y móvil.
 - Chat con selector de proveedor/modelo y adaptadores de API para Anthropic, OpenAI, OpenRouter y Gemini (solo aparecen como disponibles los proveedores cuya clave está configurada; en el Preview actual se detecta OpenRouter).
-- Lectura local de archivos de texto, PDF con texto seleccionable y hojas de cálculo para adjuntarlos como contexto a una conversación. No incluye OCR de PDF escaneados ni lectura de imágenes en esta rama.
+- Lectura local de archivos de texto, PDF con texto seleccionable y hojas de cálculo; imágenes JPG/PNG/WebP se optimizan en el navegador y se envían a OpenRouter para análisis visual (máximo 3 imágenes, 2 MB en total por consulta). No incluye OCR de PDF escaneados ni generación de imágenes.
 - Claves de proveedor leídas exclusivamente desde variables de entorno del servidor.
 - Sin credenciales incluidas en el repositorio.
 - Historial de conversaciones guardado localmente en el navegador; todavía no hay sincronización entre dispositivos ni memoria persistente de servidor.
@@ -54,7 +54,8 @@ Cualquier persona que tenga el enlace puede utilizar el chat y consumir las clav
 
 ## Funciones no activadas en esta rama
 
-- Image Studio: presente en una versión anterior de `main`, pero no se ha reincorporado a esta rama. La implementación anterior usa un endpoint de imágenes que requiere una clave de OpenAI y el modelo `gpt-image-1`, que fue retirado el 23 de octubre de 2026. La nueva versión del endpoint requiere migración y una política de presupuesto antes de activarse. No se habilita por defecto para evitar costos no autorizados.
+- Image Studio (generación/edición): no está activado en esta rama. La implementación anterior usa un endpoint que requiere una clave de OpenAI y el modelo `gpt-image-1`, retirado el 23 de octubre de 2026. La migración a un modelo vigente requiere clave y presupuesto; no se habilita por defecto para evitar costos no autorizados.
+- Análisis visual de imágenes adjuntas: sí está habilitado mediante OpenRouter cuando el modelo gratuito seleccionado admita visión.
 - Lectura de imágenes y OCR: pendiente. Los adjuntos admitidos actualmente son texto, PDF con capa de texto y hojas de cálculo.
 - Persistencia entre dispositivos, cuentas individuales, aislamiento de datos y cola cloud: pendientes.
 
