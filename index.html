@@ -333,8 +333,9 @@ async function send(){
  b.innerHTML='<span class="nexus-thinking"><span>NEXUS está pensando</span><span class="nexus-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span></span>';
  const memoryContext=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\n');
  const context=(memoryContext?'MEMORIA DEL USUARIO:\n'+memoryContext+'\n\n':'')+files.filter(f=>f.preview).map(f=>'ARCHIVO: '+f.name+'\n'+f.preview.slice(0,30000)).join('\n\n---\n\n');
+ const images=files.filter(f=>f.imageData).map(f=>({name:f.name,data:f.imageData}));
  try{
-  const res=await fetch('/api/chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context,history:currentMessages.slice(-10,-2).filter(m=>m.text).map(m=>({role:m.role,content:m.text})),provider:$('#providerSelect').value,model:$('#modelSelect').value,stream:true})});
+  const res=await fetch('/api/chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context,history:currentMessages.slice(-10,-2).filter(m=>m.text).map(m=>({role:m.role,content:m.text})),provider:$('#providerSelect').value,model:$('#modelSelect').value,images,stream:true})});
   if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'No se pudo conectar con el proveedor de IA.');}
   if(res.headers.get('content-type')?.includes('text/event-stream')){
    b.textContent='';
@@ -667,10 +668,32 @@ $('#clearAgentHistory').onclick=()=>{if(!agentRunHistory.length)return;if(!confi
 renderAgentProposals();renderAgentRunHistory();
 $('#agentCancel').onclick=()=>{if(agentController)agentController.abort()};
 $('#agentSendChat').onclick=()=>{if(!agentLastReport)return;promptBox.value='Revisa este informe del equipo multiagente y ayúdame a decidir el siguiente paso:\n\n'+agentLastReport;promptBox.focus();toast('Informe preparado en el chat')};
-function renderFiles(){fileList.innerHTML=files.length?files.map((f,i)=>'<div class="file"><span>▧</span><span style="flex:1;min-width:0"><b>'+esc(f.name)+'</b><br><small>'+esc(f.status||'Preparando lectura…')+'</small></span><button data-remove="'+i+'" title="Quitar archivo" style="background:none;border:0;color:#aaa">×</button></div>'+(f.preview?'<details style="margin:0 7px 8px;color:#aeb1bb;font-size:11px"><summary>Vista previa del contenido</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow:auto;background:#101114;padding:8px;border-radius:6px">'+esc(f.preview.slice(0,5000))+'</pre></details>':'')).join(''):'<div class="empty">Adjunta archivos para añadir contexto a esta sesión.</div>';fileList.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{files.splice(+b.dataset.remove,1);renderFiles();logActivity('Archivo quitado del contexto')})}
+function renderFiles(){fileList.innerHTML=files.length?files.map((f,i)=>'<div class="file"><span>▧</span><span style="flex:1;min-width:0"><b>'+esc(f.name)+'</b><br><small>'+esc(f.status||'Preparando lectura…')+'</small></span><button data-remove="'+i+'" title="Quitar archivo" style="background:none;border:0;color:#aaa">×</button></div>'+(f.imageData?'<img src="'+esc(f.imageData)+'" alt="Vista previa de '+esc(f.name)+'" style="display:block;max-width:100%;max-height:150px;object-fit:contain;border-radius:8px;margin:4px 7px 8px">':(f.preview?'<details style="margin:0 7px 8px;color:#aeb1bb;font-size:11px"><summary>Vista previa del contenido</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow:auto;background:#101114;padding:8px;border-radius:6px">'+esc(f.preview.slice(0,5000))+'</pre></details>':''))).join(''):'<div class="empty">Adjunta archivos para añadir contexto a esta sesión.</div>';fileList.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{files.splice(+b.dataset.remove,1);renderFiles();logActivity('Archivo quitado del contexto')})}
+async function imageToDataUrl(file){
+ const bitmap=await createImageBitmap(file);
+ const scale=Math.min(1,1280/Math.max(bitmap.width,bitmap.height));
+ const canvas=document.createElement('canvas');
+ canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+ canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+ const ctx=canvas.getContext('2d');
+ if(!ctx)throw new Error('No se pudo preparar la imagen.');
+ ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+ if(bitmap.close)bitmap.close();
+ let data=canvas.toDataURL('image/jpeg',0.78);
+ if(Math.ceil((data.length-data.indexOf(',')-1)*0.75)>1024*1024)data=canvas.toDataURL('image/jpeg',0.62);
+ if(Math.ceil((data.length-data.indexOf(',')-1)*0.75)>1024*1024)throw new Error('La imagen sigue siendo demasiado pesada; prueba con una imagen más pequeña.');
+ return data;
+}
 async function readFile(f){
  if(f.size>15*1024*1024) return {status:'Demasiado grande (máximo 15 MB)',preview:''};
  const ext=f.name.split('.').pop().toLowerCase();
+ if(f.type.startsWith('image/')||['png','jpg','jpeg','webp'].includes(ext)){
+  if(!['image/png','image/jpeg','image/webp'].includes(f.type)&&!['png','jpg','jpeg','webp'].includes(ext))return {status:'Formato de imagen no compatible',preview:''};
+  try{
+   const imageData=await imageToDataUrl(f);
+   return {status:'Imagen optimizada · lista para análisis visual',preview:'Imagen adjunta para análisis visual: '+f.name,imageData};
+  }catch(error){return {status:error.message||'No se pudo preparar la imagen',preview:''}}
+ }
  try{
   if(ext==='pdf'){
    if(!window.pdfjsLib) return {status:'No se pudo cargar el lector PDF; revisa la conexión a internet',preview:''};
