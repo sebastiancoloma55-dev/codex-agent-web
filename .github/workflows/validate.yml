@@ -36,3 +36,38 @@ jobs:
           for file in /tmp/nexus-inline-*.js; do
             node --check "$file"
           done
+
+  preview-smoke:
+    if: github.event_name == 'push'
+    needs: syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel Preview and verify API health
+        shell: bash
+        run: |
+          url="https://nexus-ai-git-feat-nexus-futuristic-open-chat-simi23.vercel.app"
+          ready=0
+          for attempt in $(seq 1 36); do
+            code=$(curl -sS -o /tmp/status.json -w "%{http_code}" "$url/api/status" || true)
+            if [ "$code" = "200" ]; then ready=1; break; fi
+            sleep 5
+          done
+          if [ "$ready" -ne 1 ]; then echo "Preview did not become ready in 3 minutes"; exit 1; fi
+          python - <<'PY'
+          import json
+          data=json.load(open("/tmp/status.json"))
+          assert data["providers"].get("openrouter") is True, "OpenRouter key is not available in Preview"
+          assert data["providers"].get("openai") is False, "Paid OpenAI provider should stay disabled"
+          assert data["providers"].get("anthropic") is False, "Paid Anthropic provider should stay disabled"
+          assert data["providers"].get("gemini") is False, "Gemini provider should stay disabled unless explicitly enabled"
+          print("Provider status OK:", data["providers"])
+          PY
+      - name: Verify page, permissions and chat validation
+        shell: bash
+        run: |
+          url="https://nexus-ai-git-feat-nexus-futuristic-open-chat-simi23.vercel.app"
+          curl -fsS "$url/" | grep -q "NEXUS AI"
+          curl -fsS "$url/api/permissions" | python -c 'import json,sys; d=json.load(sys.stdin); assert d["mode"]=="open-chat"; assert next(x for x in d["capabilities"] if x["id"]=="chat")["allowed"] is True; print("Permissions endpoint OK")'
+          code=$(curl -sS -o /tmp/chat.json -w "%{http_code}" -X POST "$url/api/chat" -H "Content-Type: application/json" -d '{"message":"","provider":"openrouter","model":"openrouter/free"}')
+          test "$code" = "400"
+          echo "Chat validation endpoint OK (no model quota consumed)"
