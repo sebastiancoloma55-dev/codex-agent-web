@@ -107,7 +107,7 @@
   #sendBtn{grid-column:3;grid-row:2;justify-self:end;min-width:132px;padding:13px 20px;font-size:16px}
   .toolbtn{padding:12px 13px;border-radius:14px;font-size:14px;white-space:nowrap}
   .model-select{font-size:13px;padding:11px 10px;border-radius:13px}
-  .hint{display:none}
+  #providerStatus{display:block;font-size:10px;line-height:1.25;padding:4px 8px;color:#9aa8c5}
 }
 
 
@@ -191,7 +191,7 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 </div></div>
 </main>
 <aside class="inspector">
-<div class="panelhead"><span>Archivos y contexto</span><span class="status">Seguro</span></div>
+<div class="panelhead"><span>Archivos y contexto</span><span class="status">MODO ABIERTO</span></div>
 <div class="panelhead"><span>Repositorio GitHub</span><span class="pill">SOLO LECTURA</span></div>
 <div class="github-explorer">
  <input id="githubRepo" value="sebastiancoloma55-dev/codex-agent-web" aria-label="Repositorio público" placeholder="usuario/repositorio">
@@ -296,7 +296,7 @@ async function loadProviderStatus(){
   }
   updateModels();
   const ready=Object.keys(data.providers).filter(key=>data.providers[key]);
-  status.textContent=ready.length?'Proveedor listo: '+ready.map(x=>x==='openrouter'?'OpenRouter':x).join(', ')+'. La clave está en el servidor; nunca se muestra aquí.':'No hay proveedores con clave configurada en este entorno.';
+  status.textContent=ready.length?'Proveedor listo: '+ready.map(x=>x==='openrouter'?'OpenRouter':x).join(', ')+'. Modo abierto: no compartas datos confidenciales.':'No hay proveedores con clave configurada en este entorno. Modo abierto: no compartas datos confidenciales.';
  }catch(error){
   status.textContent='No se pudo comprobar el estado de los proveedores. El servidor validará la clave al enviar.';
  }
@@ -306,7 +306,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hi
 function logActivity(msg){activities.unshift(msg);activities=activities.slice(0,8);$('#activityCount').textContent=activities.length;activity.innerHTML=activities.map(x=>'<div class="activityitem"><i></i><span>'+esc(x)+'</span></div>').join('')}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function addMessage(role,text){welcome.classList.add('hidden');currentMessages.push({role,text});const row=renderMessage(role,text);saveCurrent();$('#workspace').scrollTop=$('#workspace').scrollHeight;return row}
-function responseFor(text){const t=text.toLowerCase();if(t.includes('archivo')||t.includes('proyecto')||t.includes('estructura'))return 'Para analizar un proyecto real, adjunta los archivos relevantes usando “Adjuntar archivos”. En esta versión puedo registrar sus nombres y mostrar el contexto seleccionado, pero aún no envío el contenido a un modelo de IA.\n\nPlan sugerido:\n1. Identificar el punto de entrada y las dependencias.\n2. Mapear los módulos principales.\n3. Definir la tarea y sus criterios de aceptación.\n4. Proponer cambios pequeños y revisables.\n5. Preparar pruebas antes de aplicar modificaciones.';if(t.includes('error')||t.includes('revisa')||t.includes('bug'))return 'Modo de revisión preparado. Para una revisión real necesitamos conectar un modelo de IA y facilitar el código.\n\nCuando se conecte, el flujo será: reproducir el problema → localizar la causa → proponer un parche → revisar el diff → ejecutar pruebas con autorización. Por ahora no se ha inspeccionado ni modificado ningún archivo.';if(t.includes('prueba'))return 'Plan de pruebas inicial:\n1. Caso normal: entrada válida y resultado esperado.\n2. Límites: valores vacíos, tamaños máximos y caracteres especiales.\n3. Errores: dependencia no disponible, permisos insuficientes y tiempos de espera.\n4. Regresión: verificar que el comportamiento anterior siga funcionando.\n5. Evidencia: registrar resultado, pasos y versión.\n\nEste es un ejemplo demostrativo; aún no se ejecutan pruebas.';if(t.includes('plan')||t.includes('funcionalidad'))return 'Plan de implementación sugerido:\n1. Aclarar el comportamiento esperado.\n2. Identificar archivos y dependencias afectadas.\n3. Proponer una solución mínima.\n4. Mostrar un diff para revisión.\n5. Validar con pruebas y documentar resultados.\n\nNota: las modificaciones reales requieren conectar el repositorio y un agente de IA.';return 'He registrado tu solicitud en la sesión de demostración. Para convertirla en una tarea de programación real, el siguiente paso es conectar un proveedor de IA y una fuente de código autorizada.\n\nNo se ha ejecutado código, no se ha conectado a internet y no se han modificado archivos.'}
+
 async function send(){
  if(isSending)return;
  if(agentController){toast('Espera a que termine el equipo multiagente');return;}
