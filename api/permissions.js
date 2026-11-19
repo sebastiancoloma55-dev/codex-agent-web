@@ -1,8 +1,6 @@
-import { requireSession } from "./auth.js";
-
 const POLICY = Object.freeze({
   version: 1,
-  mode: "restricted",
+  mode: "open-chat",
   capabilities: [
     { id: "chat", label: "Enviar consultas a modelos de IA", allowed: true, scope: "Solo mensajes y contexto que envías" },
     { id: "multi_agent_analysis", label: "Orquestar equipo de agentes especialistas", allowed: true, scope: "Planificador, especialistas con hasta 3 consultas simultáneas y supervisor final (según tamaño del equipo); máximo 8 llamadas por ejecución. Se ejecuta mientras la pestaña permanece abierta; no es una cola persistente ni workers cloud. Cada llamada puede consumir cuota o generar costo según proveedor." },
@@ -21,7 +19,6 @@ const POLICY = Object.freeze({
 
 export default function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  if (!requireSession(req, res)) return;
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ error: "Método no permitido." });
