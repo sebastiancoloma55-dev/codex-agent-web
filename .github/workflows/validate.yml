@@ -66,7 +66,8 @@ jobs:
         shell: bash
         run: |
           url="https://nexus-ai-git-feat-nexus-futuristic-open-chat-simi23.vercel.app"
-          curl -fsS "$url/" | grep -q "NEXUS AI"
+          curl -fsS "$url/" -o /tmp/index.html
+          grep -q "NEXUS AI" /tmp/index.html
           curl -fsS "$url/api/permissions" | python -c 'import json,sys; d=json.load(sys.stdin); assert d["mode"]=="open-chat"; assert next(x for x in d["capabilities"] if x["id"]=="chat")["allowed"] is True; print("Permissions endpoint OK")'
           code=$(curl -sS -o /tmp/chat.json -w "%{http_code}" -X POST "$url/api/chat" -H "Content-Type: application/json" -d '{"message":"","provider":"openrouter","model":"openrouter/free"}')
           test "$code" = "400"
