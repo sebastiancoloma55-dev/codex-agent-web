@@ -153,6 +153,9 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 .auth-logout{display:none}
 @media(max-width:1050px){.app{grid-template-columns:232px minmax(0,1fr)}}
 @media(max-width:700px){.app{grid-template-columns:minmax(0,1fr);min-height:100dvh;height:100dvh}.topbar{height:58px;padding:0 15px}.workspace{padding:24px 15px 12px}.composer-wrap{padding:8px 12px 14px}.suggestions{grid-template-columns:1fr}h1{font-size:37px;letter-spacing:-1.6px}.sub{font-size:14px}.composer{border-radius:17px}.composer-bottom{gap:6px}.toolbtn{font-size:12px;padding:9px}.model-select{font-size:11px;max-width:116px;padding:8px}}
+
+/* NEXUS live thinking indicator */
+.nexus-thinking{display:inline-flex;align-items:center;gap:9px;color:#b9c7ee;font-size:13px;letter-spacing:.1px}.nexus-thinking-dots{display:inline-flex;gap:4px;align-items:center}.nexus-thinking-dots i{display:block;width:5px;height:5px;border-radius:50%;background:#78dff5;animation:nexusPulse 1s infinite ease-in-out}.nexus-thinking-dots i:nth-child(2){animation-delay:.15s}.nexus-thinking-dots i:nth-child(3){animation-delay:.3s}@keyframes nexusPulse{0%,60%,100%{opacity:.28;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
 </style>
 </head>
 <body>
@@ -288,7 +291,7 @@ async function send(){
  logActivity('Solicitud registrada');
  const row=addMessage('assistant','');
  const b=row.querySelector('.bubble');
- b.textContent='Enviando la consulta al agente…';
+ b.innerHTML='<span class="nexus-thinking"><span>NEXUS está pensando</span><span class="nexus-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span></span>';
  const memoryContext=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\n');
  const context=(memoryContext?'MEMORIA DEL USUARIO:\n'+memoryContext+'\n\n':'')+files.filter(f=>f.preview).map(f=>'ARCHIVO: '+f.name+'\n'+f.preview.slice(0,30000)).join('\n\n---\n\n');
  try{
