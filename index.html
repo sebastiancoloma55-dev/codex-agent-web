@@ -727,14 +727,14 @@ async function readFile(f){
     range.e.r=Math.min(range.e.r,9999);range.e.c=Math.min(range.e.c,99);
     const end=XLSX.utils.encode_cell(range.e);
     const csv=XLSX.utils.sheet_to_csv(sheet,{range:'A1:'+end});
-    const header='HOJA: '+name+'\\n';
+    const header='HOJA: '+name+'\n';
     const chunk=csv.slice(0,Math.max(0,remaining-header.length));
     parts.push(header+chunk);
     remaining-=header.length+chunk.length;
     if(csv.length>chunk.length||originalRows>10000||originalCols>100)parts.push('[Hoja truncada: máximo 10.000 filas y 100 columnas por hoja.]');
    }
    if(truncatedSheets>0)parts.push('[Se omitieron '+truncatedSheets+' hoja(s) adicionales.]');
-   const preview=parts.join('\\n\\n');
+   const preview=parts.join('\n\n');
    return {status:'Leído · '+sheetNames.length+' de '+wb.SheetNames.length+' hoja(s) · extracción limitada a 30.000 caracteres',preview:preview.slice(0,30000)};
   }
   if(['txt','md','csv','json','js','jsx','ts','tsx','html','css','py','java','sql','xml','yml','yaml','log','sh','toml'].includes(ext)||f.type.startsWith('text/')){
