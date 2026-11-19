@@ -130,6 +130,8 @@ export default async function handler(req, res) {
         res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
         res.setHeader("Cache-Control", "no-cache, no-transform");
         res.setHeader("Connection", "keep-alive");
+        res.setHeader("X-Accel-Buffering", "no");
+        res.flushHeaders?.();
         const reader = upstream.body.getReader();
         try {
           while (true) {
@@ -137,7 +139,9 @@ export default async function handler(req, res) {
             if (done) break;
             res.write(Buffer.from(value));
           }
-        } finally { res.end(); }
+        } catch (streamError) {
+          if (!res.writableEnded) res.write("data: " + JSON.stringify({ error: "La conexión con el proveedor se interrumpió. Inténtalo nuevamente." }) + "\\n\\n");
+        } finally { if (!res.writableEnded) res.end(); }
         return;
       }
       const data = await upstream.json();
