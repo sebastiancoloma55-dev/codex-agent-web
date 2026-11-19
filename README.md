@@ -5,8 +5,8 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 ## Estado de esta etapa
 
 - Interfaz web rebrandeada como NEXUS AI, adaptable a escritorio y móvil.
-- Chat con selector de proveedor/modelo y adaptadores de API para Anthropic, OpenAI, OpenRouter y Gemini (solo aparecen como disponibles los proveedores cuya clave está configurada; en el Preview actual se detecta OpenRouter).
-- Lectura local de archivos de texto, PDF con texto seleccionable y hojas de cálculo; imágenes JPG/PNG/WebP se optimizan en el navegador y se envían a OpenRouter para análisis visual (máximo 3 imágenes, 2 MB en total por consulta). No incluye OCR de PDF escaneados ni generación de imágenes.
+- Chat con selector de proveedor/modelo. El modo público bloquea proveedores con costo y usa solo OpenRouter Free; los demás proveedores requieren habilitar explícitamente `NEXUS_ENABLE_PAID_PROVIDERS=true` además de su clave privada.
+- Lectura local de TXT/MD/CSV/JSON/código, DOCX, PDF con texto seleccionable y hojas de cálculo; imágenes JPG/PNG/WebP se optimizan en el navegador y se envían a OpenRouter para análisis visual (máximo 3 imágenes, 2 MB en total por consulta). Máximo 10 adjuntos y 30 MB combinados. No incluye OCR de PDF escaneados ni generación de imágenes. La extracción de hojas de cálculo limita el contexto a 30.000 caracteres, hasta 30 hojas, 10.000 filas y 100 columnas por hoja.
 - Claves de proveedor leídas exclusivamente desde variables de entorno del servidor.
 - Sin credenciales incluidas en el repositorio.
 - Historial de conversaciones guardado localmente en el navegador; todavía no hay sincronización entre dispositivos ni memoria persistente de servidor.
@@ -26,7 +26,8 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 - Historial local de las últimas 20 ejecuciones multiagente: registra proveedor/modelo, tamaño del equipo, estado, fecha y resultados parciales; permite descargar informes Markdown y se incluye en el respaldo JSON. Las ejecuciones que quedan abiertas tras recargar la página se marcan como interrumpidas.
 - Arquitectura objetivo y fases de escalamiento documentadas en `docs/AGENT_PLATFORM_ARCHITECTURE.md`, incluyendo cola persistente, workers limitados, presupuesto, sandbox, OAuth y auditoría.
 - El equipo produce análisis, propuestas y diffs sugeridos; no aplica parches, no ejecuta comandos ni modifica GitHub.
-- La ejecución de tareas multiagente valida dependencias, pero la asignación actual sigue agrupando trabajo por especialista; no equivale a un motor de tareas distribuido con dependencias persistentes. La revisión y aprobación son conceptuales en esta etapa; las herramientas de escritura y sandbox siguen bloqueadas.
+- La ejecución de tareas multiagente valida dependencias, pero la asignación actual sigue agrupando trabajo por especialista; no equivale a un motor de tareas distribuido con dependencias persistentes.
+- El límite de 20 consultas/minuto del servidor se mantiene en memoria por instancia y no es un rate limit distribuido; OpenRouter Free aplica sus propios límites de uso. La revisión y aprobación son conceptuales en esta etapa; las herramientas de escritura y sandbox siguen bloqueadas.
 - Sin ejecución de herramientas de sistema ni integración GitHub de escritura. El panel de permisos describe las capacidades actuales y bloqueadas.
 - No se ha creado un despliegue de Vercel ni se han activado servicios de pago.
 
