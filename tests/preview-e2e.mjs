@@ -9,20 +9,20 @@ try {
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
-  await page.waitForFunction(() => document.querySelector("#providerStatus")?.textContent.includes("OpenRouter"), { timeout: 30000 });
+  await page.waitForFunction(() => document.querySelector("#providerStatus")?.textContent.includes("OpenRouter"), null, { timeout: 30000 });
 
   await page.locator("#prompt").fill("Responde exactamente E2E_UI_OK y nada más.");
   await page.locator("#sendBtn").click();
   assert.equal(await page.locator("#sendBtn").isDisabled(), true, "Enviar debe bloquearse mientras responde");
-  await page.waitForFunction(() => document.querySelector("#chatlog")?.innerText.includes("E2E_UI_OK"), { timeout: 90000 });
-  await page.waitForFunction(() => !document.querySelector("#sendBtn")?.disabled, { timeout: 10000 });
+  await page.waitForFunction(() => [...document.querySelectorAll("#chatlog .message.assistant .bubble")].some(node => node.textContent.includes("E2E_UI_OK")), null, { timeout: 90000 });
+  await page.waitForFunction(() => !document.querySelector("#sendBtn")?.disabled, null, { timeout: 10000 });
 
   await page.locator("#fileInput").setInputFiles({ name: "prueba-roja.png", mimeType: "image/png", buffer: redPng });
-  await page.waitForFunction(() => document.querySelector("#filelist")?.innerText.includes("Imagen optimizada"), { timeout: 30000 });
+  await page.waitForFunction(() => document.querySelector("#filelist")?.innerText.includes("Imagen optimizada"), null, { timeout: 30000 });
   await page.locator("#prompt").fill("¿Qué color predomina en la imagen adjunta? Responde con una sola palabra.");
   await page.locator("#sendBtn").click();
   assert.equal(await page.locator("#sendBtn").isDisabled(), true, "Enviar debe bloquearse durante el análisis de imagen");
-  await page.waitForFunction(() => document.querySelector("#chatlog")?.innerText.toLowerCase().includes("roj"), { timeout: 90000 });
+  await page.waitForFunction(() => [...document.querySelectorAll("#chatlog .message.assistant .bubble")].some(node => node.textContent.toLowerCase().includes("roj")), null, { timeout: 90000 });
   await page.waitForFunction(() => !document.querySelector("#sendBtn")?.disabled, { timeout: 10000 });
 
   const fitsMobile = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
