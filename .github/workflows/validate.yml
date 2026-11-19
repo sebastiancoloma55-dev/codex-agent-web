@@ -72,3 +72,52 @@ jobs:
           code=$(curl -sS -o /tmp/chat.json -w "%{http_code}" -X POST "$url/api/chat" -H "Content-Type: application/json" -d '{"message":"","provider":"openrouter","model":"openrouter/free"}')
           test "$code" = "400"
           echo "Chat validation endpoint OK (no model quota consumed)"
+
+      - name: Test real OpenRouter Free chat and image understanding
+        shell: bash
+        run: |
+          url="https://nexus-ai-git-feat-nexus-futuristic-open-chat-simi23.vercel.app"
+          python - <<'PY'
+          import json
+          payload={"message":"Responde exactamente NEXUS_OK y nada más.","provider":"openrouter","model":"openrouter/free","stream":True}
+          json.dump(payload,open("/tmp/text-request.json","w"))
+          image="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAK0lEQVR4nO3NQQEAAATAQATRP5QwSvC7BdjldMdn9XoHAAAAAAAAAAAAhy3SgAFYpLG4gwAAAABJRU5ErkJggg=="
+          payload={"message":"¿Qué color predomina en esta imagen? Responde en una sola palabra.","provider":"openrouter","model":"openrouter/free","images":[{"name":"red-test.png","data":image}],"stream":True}
+          json.dump(payload,open("/tmp/image-request.json","w"))
+          PY
+          code=$(curl -sS -N -o /tmp/text-response.txt -w "%{http_code}" -X POST "$url/api/chat" -H "Content-Type: application/json" --data-binary @/tmp/text-request.json)
+          test "$code" = "200"
+          python - <<'PY'
+          import json
+          raw=open("/tmp/text-response.txt").read()
+          parts=[]
+          for line in raw.splitlines():
+              if line.startswith("data:"):
+                  value=line[5:].strip()
+                  if value=="[DONE]" or not value: continue
+                  item=json.loads(value)
+                  if item.get("error"): raise SystemExit(item["error"])
+                  parts.append(item.get("choices",[{}])[0].get("delta",{}).get("content",""))
+          answer="".join(parts).strip()
+          assert "NEXUS_OK" in answer, f"Unexpected text response: {answer!r}"
+          print("Real text chat OK")
+          PY
+          code=$(curl -sS -N -o /tmp/image-response.txt -w "%{http_code}" -X POST "$url/api/chat" -H "Content-Type: application/json" --data-binary @/tmp/image-request.json)
+          test "$code" = "200"
+          python - <<'PY'
+          import json
+          raw=open("/tmp/image-response.txt").read()
+          parts=[]
+          for line in raw.splitlines():
+              if line.startswith("data:"):
+                  value=line[5:].strip()
+                  if value=="[DONE]" or not value: continue
+                  item=json.loads(value)
+                  if item.get("error"): raise SystemExit(item["error"])
+                  parts.append(item.get("choices",[{}])[0].get("delta",{}).get("content",""))
+          answer="".join(parts).strip().lower()
+          assert answer, "Image request returned no text"
+          assert "roj" in answer or "red" in answer, f"Image understanding mismatch: {answer!r}"
+          print("Real image understanding OK:", answer)
+          PY
+
