@@ -40,7 +40,7 @@ jobs:
   preview-smoke:
     if: github.event_name == 'push'
     needs: syntax
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Wait for Vercel Preview and verify API health
         shell: bash
