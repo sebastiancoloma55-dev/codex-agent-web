@@ -812,6 +812,7 @@ async function acceptAsistenciaSession(token){
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.authenticated)throw new Error(data.error||'No tienes permiso para utilizar NEXUS AI.');
   hideNexusSsoGate();
+  try { const origin = new URL(document.referrer).origin; if (NEXUS_ALLOWED_ASISTENCIA_ORIGINS.includes(origin)) window.parent.postMessage({ type: 'NEXUS_SSO_AUTHENTICATED' }, origin); } catch (_) {}
   logActivity('Sesión de Asistencia verificada');
   await Promise.all([loadPermissionPolicy(),loadProviderStatus()]);
  }catch(error){
