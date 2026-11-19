@@ -257,7 +257,7 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const chat=$('#chatlog'), promptBox=$('#prompt'), welcome=$('#welcome'), fileList=$('#filelist'), activity=$('#activity');
 let isSending=false, files=[], taskCount=0, activities=[], currentMessages=[], currentConversationId=null, conversations=loadConversations(), projects=loadProjects(), memories=loadMemories(), currentProjectId='default';
 let nexusAccessToken = null;
-function requestAsistenciaSession(){try{const origin=new URL(document.referrer).origin;if(["https://asistencia-doctor-simi2026-nt80gj24i-simi23.vercel.app","https://asistencia-doctor-simi2026-git-feat-integracion-n-2b10e9-simi23.vercel.app"].includes(origin))window.parent.postMessage({type:'NEXUS_SSO_REFRESH'},origin);}catch{}}
+function requestAsistenciaSession(){try{const origin=new URL(document.referrer).origin;if(NEXUS_ALLOWED_ASISTENCIA_ORIGINS.includes(origin))window.parent.postMessage({type:'NEXUS_SSO_REFRESH'},origin);}catch{}}
 async function nexusFetch(url,options={}){
  if(!nexusAccessToken)throw new Error('Abre NEXUS desde Asistencia Doctor Simi para validar tu sesión.');
  const headers=new Headers(options.headers||{});headers.set('Authorization','Bearer '+nexusAccessToken);
@@ -791,7 +791,7 @@ async function loadPermissionPolicy(){
 }
 $('#permissionsNav').onclick=()=>{$('#permissionPanel').scrollIntoView({behavior:'smooth',block:'center'});loadPermissionPolicy()};
 
-const NEXUS_ALLOWED_ASISTENCIA_ORIGINS=["https://asistencia-doctor-simi2026-nt80gj24i-simi23.vercel.app","https://asistencia-doctor-simi2026-git-feat-integracion-n-2b10e9-simi23.vercel.app"];
+const NEXUS_ALLOWED_ASISTENCIA_ORIGINS=["https://asistencia-doctor-simi2026.vercel.app","https://asistencia-doctor-simi2026-simi23.vercel.app","https://asistencia-doctor-simi2026-6s9me2l8t-simi23.vercel.app","https://asistencia-doctor-simi2026-e89cfd3le-simi23.vercel.app","https://asistencia-doctor-simi2026-nt80gj24i-simi23.vercel.app","https://asistencia-doctor-simi2026-git-feat-integracion-n-2b10e9-simi23.vercel.app"];
 function showNexusSsoGate(message){
  let gate=document.getElementById('nexus-sso-gate');
  if(!gate){
