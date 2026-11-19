@@ -49,13 +49,14 @@ jobs:
           ready=0
           for attempt in $(seq 1 36); do
             code=$(curl -sS -o /tmp/status.json -w "%{http_code}" "$url/api/status" || true)
-            if [ "$code" = "200" ]; then ready=1; break; fi
+            if [ "$code" = "200" ] && EXPECTED_SHA="$GITHUB_SHA" python -c 'import json,os; d=json.load(open("/tmp/status.json")); raise SystemExit(0 if d.get("commit")==os.environ["EXPECTED_SHA"] else 1)'; then ready=1; break; fi
             sleep 5
           done
-          if [ "$ready" -ne 1 ]; then echo "Preview did not become ready in 3 minutes"; exit 1; fi
-          python - <<'PY'
-          import json
+          if [ "$ready" -ne 1 ]; then echo "The exact Preview commit did not become ready in 3 minutes"; exit 1; fi
+          EXPECTED_SHA="$GITHUB_SHA" python - <<'PY'
+          import json,os
           data=json.load(open("/tmp/status.json"))
+          assert data.get("commit")==os.environ["EXPECTED_SHA"], "Preview commit does not match the pushed Git commit"
           assert data["providers"].get("openrouter") is True, "OpenRouter key is not available in Preview"
           assert data["providers"].get("openai") is False, "Paid OpenAI provider should stay disabled"
           assert data["providers"].get("anthropic") is False, "Paid Anthropic provider should stay disabled"
