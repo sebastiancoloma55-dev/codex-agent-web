@@ -132,7 +132,7 @@ export default async function handler(req, res) {
     }
     if (!reply) return json(res, 502, { error: "El proveedor no devolvió contenido." });
     return json(res, 200, { reply, provider, model: resolvedModel, requestedModel: model });
-  } catch {
-    return json(res, 502, { error: "No fue posible conectar con el proveedor de IA. Inténtalo nuevamente." });
+  } catch (error) {
+    return json(res, error?.name === "TimeoutError" ? 504 : 502, { error: error?.name === "TimeoutError" ? "El proveedor tardó demasiado en responder. Inténtalo nuevamente." : "No fue posible conectar con el proveedor de IA. Inténtalo nuevamente." });
   }
 }
