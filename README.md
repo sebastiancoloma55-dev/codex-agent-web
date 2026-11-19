@@ -11,10 +11,10 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 - Sin credenciales incluidas en el repositorio.
 - Historial de conversaciones guardado localmente en el navegador; todavía no hay sincronización entre dispositivos ni memoria persistente de servidor.
 - Proyectos de trabajo, memoria editable por usuario y exportación de respaldo guardados localmente en el navegador.
-- Acceso directo sin contraseña ni sesión: la interfaz y el chat quedan públicos para cualquier persona que tenga el enlace. No se deben enviar datos personales, médicos, laborales ni confidenciales mientras no exista autenticación individual y aislamiento de datos.
+- Acceso mediante inicio de sesión único (SSO) desde Asistencia Doctor Simi: NEXUS recibe el token de sesión por `postMessage` desde el iframe autorizado y valida en servidor la identidad en Supabase Auth y el permiso `nexus-ai` en `usuarios_roles`. El acceso directo a la URL y las llamadas a las API sin sesión válida quedan bloqueados.
 - Límite inicial de intentos de acceso en memoria del proceso (8 intentos por ventana de 15 minutos); se validan tamaños de contraseña y cabeceras de cookies. Es protección básica, no rate limiting distribuido.
 - API de chat limitada inicialmente a 20 solicitudes por minuto por IP y timeout de 45 segundos por llamada al proveedor; valida el formato del cuerpo, limita mensaje/contexto/historial y aplica un máximo de 70.000 caracteres de texto total. El limitador en memoria no sustituye un rate limiter distribuido.
-- Endpoint privado `/api/permissions` y panel de capacidades: consultas, lectura de adjuntos e historial local permitidos; escritura de archivos, ejecución, GitHub, despliegues y gestión de secretos bloqueados.
+- Endpoints `/api/auth`, `/api/chat`, `/api/status` y `/api/permissions` protegidos por verificación server-side de la sesión de Asistencia. El panel de capacidades mantiene escritura de archivos, ejecución, GitHub de escritura, despliegues y gestión de secretos bloqueados.
 - Explorador de repositorios GitHub públicos en modo solo lectura desde el navegador: árbol de archivos, filtro, vista previa y selección de archivos para contexto; no requiere token ni permite escrituras.
 - Endpoint `/api/status` para mostrar disponibilidad de proveedores sin revelar claves; las opciones sin clave configurada quedan deshabilitadas en la interfaz.
 - Validación automática de sintaxis para las funciones API y scripts del navegador mediante GitHub Actions.
@@ -33,7 +33,7 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 
 ## Desarrollo local
 
-Sirve el repositorio con Vercel CLI o un entorno compatible con funciones serverless. La página estática abre directamente el chat. `/api/auth` solo informa el modo abierto; `/api/chat` no requiere sesión. Esta configuración es apropiada solo para pruebas con información no sensible.
+Sirve el repositorio con Vercel CLI o un entorno compatible con funciones serverless. Para probar SSO configura `SUPABASE_URL` y `SUPABASE_ANON_KEY` en el entorno privado del servidor y abre NEXUS desde el módulo autorizado de Asistencia. La URL directa no concede acceso; `/api/auth`, `/api/chat`, `/api/status` y `/api/permissions` requieren un token válido.
 
 ## Variables de entorno (solo en el entorno privado)
 
@@ -49,9 +49,9 @@ Selecciona un proveedor con `AI_PROVIDER`:
 
 Opcionales: `APP_URL`. Nunca guardes claves en Git, archivos públicos, código del navegador o capturas.
 
-## Seguridad del modo abierto
+## Seguridad y SSO
 
-Cualquier persona que tenga el enlace puede utilizar el chat y consumir las claves de IA configuradas por el propietario. No hay identidad, historial compartido en servidor ni separación de usuarios. No subas planillas con RUT, licencias médicas, remuneraciones, datos de colaboradores ni otros datos confidenciales. Para uso real se debe implementar autenticación individual, cuotas por usuario y almacenamiento aislado.
+NEXUS se abre desde Asistencia Doctor Simi mediante sesión única. El servidor valida el JWT contra Supabase Auth y comprueba que el perfil esté activo y tenga el permiso `nexus-ai`, salvo el administrador principal configurado en el código. El token no se guarda en localStorage ni se incluye en la URL; se mantiene en memoria y se transmite únicamente entre el iframe y el origen autorizado de Asistencia. Al cerrar sesión en Asistencia, el módulo bloquea la interfaz de NEXUS. El historial y los proyectos continúan guardándose localmente en el navegador; no existe todavía sincronización ni persistencia compartida entre usuarios.
 
 ## Funciones no activadas en esta rama
 
