@@ -11,7 +11,7 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 - Sin credenciales incluidas en el repositorio.
 - Historial de conversaciones guardado localmente en el navegador; todavía no hay sincronización entre dispositivos ni memoria persistente de servidor.
 - Proyectos de trabajo, memoria editable por usuario y exportación de respaldo guardados localmente en el navegador.
-- Acceso privado de contraseña única con sesión firmada, cookie segura y protección del endpoint de chat; todavía no hay cuentas individuales ni roles.
+- Acceso directo sin contraseña ni sesión: la interfaz y el chat quedan públicos para cualquier persona que tenga el enlace. No se deben enviar datos personales, médicos, laborales ni confidenciales mientras no exista autenticación individual y aislamiento de datos.
 - Límite inicial de intentos de acceso en memoria del proceso (8 intentos por ventana de 15 minutos); se validan tamaños de contraseña y cabeceras de cookies. Es protección básica, no rate limiting distribuido.
 - API de chat limitada inicialmente a 20 solicitudes por minuto por IP y timeout de 45 segundos por llamada al proveedor; valida el formato del cuerpo, limita mensaje/contexto/historial y aplica un máximo de 70.000 caracteres de texto total. El limitador en memoria no sustituye un rate limiter distribuido.
 - Endpoint privado `/api/permissions` y panel de capacidades: consultas, lectura de adjuntos e historial local permitidos; escritura de archivos, ejecución, GitHub, despliegues y gestión de secretos bloqueados.
@@ -29,14 +29,12 @@ Plataforma independiente de asistente multimodelo. Este repositorio se desarroll
 
 ## Desarrollo local
 
-Sirve el repositorio con Vercel CLI o un entorno compatible con funciones serverless. La página estática consulta `/api/auth` al iniciar y usa `/api/chat` solo con una sesión válida. La cookie requiere HTTPS (por ejemplo, Vercel Preview). En desarrollo local HTTP, configura un proxy HTTPS o adapta el entorno de pruebas; no desactives la seguridad en un despliegue público.
+Sirve el repositorio con Vercel CLI o un entorno compatible con funciones serverless. La página estática abre directamente el chat. `/api/auth` solo informa el modo abierto; `/api/chat` no requiere sesión. Esta configuración es apropiada solo para pruebas con información no sensible.
 
 ## Variables de entorno (solo en el entorno privado)
 
 Configura estas variables únicamente en el entorno privado del servidor (nunca en GitHub ni en el navegador):
 
-- `NEXUS_ACCESS_PASSWORD`: contraseña de acceso privado (máximo 256 caracteres).
-- `NEXUS_SESSION_SECRET`: secreto aleatorio de al menos 32 caracteres para firmar sesiones. Usa un valor distinto de la contraseña.
 
 Selecciona un proveedor con `AI_PROVIDER`:
 
@@ -46,6 +44,10 @@ Selecciona un proveedor con `AI_PROVIDER`:
 - `gemini`: `GEMINI_API_KEY`, opcional `GEMINI_MODEL`.
 
 Opcionales: `APP_URL`. Nunca guardes claves en Git, archivos públicos, código del navegador o capturas.
+
+## Seguridad del modo abierto
+
+Cualquier persona que tenga el enlace puede utilizar el chat y consumir las claves de IA configuradas por el propietario. No hay identidad, historial compartido en servidor ni separación de usuarios. No subas planillas con RUT, licencias médicas, remuneraciones, datos de colaboradores ni otros datos confidenciales. Para uso real se debe implementar autenticación individual, cuotas por usuario y almacenamiento aislado.
 
 ## Próximas fases
 
