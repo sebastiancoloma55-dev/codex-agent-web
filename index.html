@@ -292,14 +292,35 @@ async function send(){
  const memoryContext=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\n');
  const context=(memoryContext?'MEMORIA DEL USUARIO:\n'+memoryContext+'\n\n':'')+files.filter(f=>f.preview).map(f=>'ARCHIVO: '+f.name+'\n'+f.preview.slice(0,30000)).join('\n\n---\n\n');
  try{
-  const res=await fetch('/api/chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context,history:currentMessages.slice(0,-2).filter(m=>m.text).map(m=>({role:m.role,content:m.text})),provider:$('#providerSelect').value,model:$('#modelSelect').value})});
-  const data=await res.json().catch(()=>({}));
-  if(!res.ok)throw new Error(data.error||'No se pudo conectar con el proveedor de IA.');
-  b.textContent=data.reply||'El proveedor no devolvió una respuesta.';
+  const res=await fetch('/api/chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context,history:currentMessages.slice(-10,-2).filter(m=>m.text).map(m=>({role:m.role,content:m.text})),provider:$('#providerSelect').value,model:$('#modelSelect').value,stream:true})});
+  if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'No se pudo conectar con el proveedor de IA.');}
+  if(res.headers.get('content-type')?.includes('text/event-stream')){
+   b.textContent='';
+   const reader=res.body.getReader(),decoder=new TextDecoder();
+   let pending='';
+   while(true){
+    const {done,value}=await reader.read();
+    if(done)break;
+    pending+=decoder.decode(value,{stream:true});
+    const events=pending.split(/\r?\n\r?\n/);pending=events.pop()||'';
+    for(const event of events){
+     for(const line of event.split(/\r?\n/)){
+      if(!line.startsWith('data:'))continue;
+      const payload=line.slice(5).trim();
+      if(!payload||payload==='[DONE]')continue;
+      try{const chunk=JSON.parse(payload);const piece=chunk.choices?.[0]?.delta?.content;if(typeof piece==='string'&&piece){b.textContent+=piece;chat.scrollTop=chat.scrollHeight;}}catch{}
+     }
+    }
+   }
+   if(!b.textContent.trim())throw new Error('El proveedor no devolvió contenido.');
+  }else{
+   const data=await res.json().catch(()=>({}));
+   b.textContent=data.reply||'El proveedor no devolvió una respuesta.';
+  }
   if(currentMessages.at(-1)?.role==='assistant'&&!currentMessages.at(-1).text)currentMessages.pop();
   currentMessages.push({role:'assistant',text:b.textContent});
   saveCurrent();
-  logActivity('Respuesta recibida · '+(data.model||data.provider||'IA'));
+  logActivity('Respuesta recibida · '+$('#providerSelect').value);
  }catch(err){
   const reason=String(err.message||'Error de conexión');
   const missingKey=/clave privada del proveedor|api.?key|missing.*key|not configured/i.test(reason);
