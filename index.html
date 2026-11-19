@@ -248,10 +248,10 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 </aside>
 </div>
 <div id="toast" class="toast hidden"></div>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"}</script>
+
+
+
+
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const chat=$('#chatlog'), promptBox=$('#prompt'), welcome=$('#welcome'), fileList=$('#filelist'), activity=$('#activity');
@@ -704,6 +704,19 @@ async function imageToDataUrl(file){
  if(Math.ceil((data.length-data.indexOf(',')-1)*0.75)>1024*1024)data=canvas.toDataURL('image/jpeg',0.62);
  if(Math.ceil((data.length-data.indexOf(',')-1)*0.75)>1024*1024)throw new Error('La imagen sigue siendo demasiado pesada; prueba con una imagen más pequeña.');
  return data;
+}
+const nexusLibraryLoads = Object.create(null);
+function loadNexusLibrary(key, url, globalName){
+ if(window[globalName])return Promise.resolve(window[globalName]);
+ if(nexusLibraryLoads[key])return nexusLibraryLoads[key];
+ nexusLibraryLoads[key]=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src=url;script.async=true;
+  script.onload=()=>window[globalName]?resolve(window[globalName]):reject(new Error('La biblioteca no quedó disponible.'));
+  script.onerror=()=>{delete nexusLibraryLoads[key];reject(new Error('No se pudo cargar el lector de archivos. Revisa tu conexión.'))};
+  document.head.appendChild(script);
+ });
+ return nexusLibraryLoads[key];
 }
 async function readFile(f){
  if(f.size>15*1024*1024) return {status:'Demasiado grande (máximo 15 MB)',preview:''};
