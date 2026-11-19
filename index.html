@@ -187,7 +187,7 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 </section>
 <div class="composer-wrap"><div style="width:min(760px,100%)">
 <div class="composer"><textarea id="prompt" placeholder="Describe lo que quieres construir…" rows="2"></textarea><div class="composer-bottom"><button class="toolbtn" id="attachBtn">＋ Adjuntar archivos</button><button class="toolbtn" id="planBtn">☷ Plan</button><select class="model-select" id="providerSelect" aria-label="Proveedor de IA"><option value="openrouter">OpenRouter · Gratis</option><option value="anthropic">Claude</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select><select class="model-select" id="modelSelect" aria-label="Modelo"></select><button class="send" id="sendBtn">Enviar ↑</button></div></div>
-<div class="hint">NEXUS AI · Revisa las respuestas antes de tomar decisiones importantes.</div>
+<div class="hint" id="providerStatus">NEXUS AI · Comprobando proveedores disponibles…</div>
 </div></div>
 </main>
 <aside class="inspector">
@@ -277,7 +277,31 @@ function deleteConversation(id){if(!confirm('¿Eliminar esta conversación de es
 function openConversation(id){const c=conversations.find(x=>x.id===id&&(x.projectId||'default')===currentProjectId);if(!c)return;currentConversationId=id;currentMessages=c.messages||[];chat.innerHTML='';welcome.classList.add('hidden');currentMessages.forEach(m=>renderMessage(m.role,m.text));renderRecent();$('#workspace').scrollTop=$('#workspace').scrollHeight}
 function renderMessage(role,text){const row=document.createElement('div');row.className='message '+role;row.innerHTML='<div class="msgavatar">'+(role==='user'?'Tú':'N')+'</div><div class="bubble"></div>';row.querySelector('.bubble').textContent=text;chat.appendChild(row);return row}
 function updateModels(){const p=$('#providerSelect').value;$('#modelSelect').innerHTML=modelOptions[p].map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')}
-$('#providerSelect').addEventListener('change',updateModels);updateModels();renderProjects();renderMemories();renderRecent();$('#projectSelect').onchange=e=>{currentProjectId=e.target.value;chat.innerHTML='';currentMessages=[];currentConversationId=null;welcome.classList.remove('hidden');renderRecent();renderMemories();assignedRegistryProfiles=loadAssignedRegistry();renderAgentRegistry($('#agentRegistrySearch').value)};$('#newProject').onclick=createProject;$('#addMemory').onclick=addMemory;$('#exportData').onclick=exportWorkspace;
+$('#providerSelect').addEventListener('change',updateModels);updateModels();
+async function loadProviderStatus(){
+ const status=$('#providerStatus');
+ try{
+  const response=await fetch('/api/status',{method:'GET',cache:'no-store'});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.providers)throw new Error('No se pudo consultar la disponibilidad de proveedores.');
+  const options=[...$('#providerSelect').options];
+  options.forEach(option=>{
+   const available=data.providers[option.value]===true;
+   option.disabled=!available;
+   option.textContent=option.value==='openrouter'?'OpenRouter · Gratis'+(available?'':' · no configurado'):option.textContent.replace(/ · (no configurado|clave detectada)$/,'')+(available?' · clave detectada':' · no configurado');
+  });
+  if(!data.providers[$('#providerSelect').value]){
+   const first=options.find(option=>data.providers[option.value]===true);
+   if(first)$('#providerSelect').value=first.value;
+  }
+  updateModels();
+  const ready=Object.keys(data.providers).filter(key=>data.providers[key]);
+  status.textContent=ready.length?'Proveedor listo: '+ready.map(x=>x==='openrouter'?'OpenRouter':x).join(', ')+'. La clave está en el servidor; nunca se muestra aquí.':'No hay proveedores con clave configurada en este entorno.';
+ }catch(error){
+  status.textContent='No se pudo comprobar el estado de los proveedores. El servidor validará la clave al enviar.';
+ }
+}
+renderProjects();renderMemories();renderRecent();$('#projectSelect').onchange=e=>{currentProjectId=e.target.value;chat.innerHTML='';currentMessages=[];currentConversationId=null;welcome.classList.remove('hidden');renderRecent();renderMemories();assignedRegistryProfiles=loadAssignedRegistry();renderAgentRegistry($('#agentRegistrySearch').value)};$('#newProject').onclick=createProject;$('#addMemory').onclick=addMemory;$('#exportData').onclick=exportWorkspace;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),2400)}
 function logActivity(msg){activities.unshift(msg);activities=activities.slice(0,8);$('#activityCount').textContent=activities.length;activity.innerHTML=activities.map(x=>'<div class="activityitem"><i></i><span>'+esc(x)+'</span></div>').join('')}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -285,10 +309,16 @@ function addMessage(role,text){welcome.classList.add('hidden');currentMessages.p
 function responseFor(text){const t=text.toLowerCase();if(t.includes('archivo')||t.includes('proyecto')||t.includes('estructura'))return 'Para analizar un proyecto real, adjunta los archivos relevantes usando “Adjuntar archivos”. En esta versión puedo registrar sus nombres y mostrar el contexto seleccionado, pero aún no envío el contenido a un modelo de IA.\n\nPlan sugerido:\n1. Identificar el punto de entrada y las dependencias.\n2. Mapear los módulos principales.\n3. Definir la tarea y sus criterios de aceptación.\n4. Proponer cambios pequeños y revisables.\n5. Preparar pruebas antes de aplicar modificaciones.';if(t.includes('error')||t.includes('revisa')||t.includes('bug'))return 'Modo de revisión preparado. Para una revisión real necesitamos conectar un modelo de IA y facilitar el código.\n\nCuando se conecte, el flujo será: reproducir el problema → localizar la causa → proponer un parche → revisar el diff → ejecutar pruebas con autorización. Por ahora no se ha inspeccionado ni modificado ningún archivo.';if(t.includes('prueba'))return 'Plan de pruebas inicial:\n1. Caso normal: entrada válida y resultado esperado.\n2. Límites: valores vacíos, tamaños máximos y caracteres especiales.\n3. Errores: dependencia no disponible, permisos insuficientes y tiempos de espera.\n4. Regresión: verificar que el comportamiento anterior siga funcionando.\n5. Evidencia: registrar resultado, pasos y versión.\n\nEste es un ejemplo demostrativo; aún no se ejecutan pruebas.';if(t.includes('plan')||t.includes('funcionalidad'))return 'Plan de implementación sugerido:\n1. Aclarar el comportamiento esperado.\n2. Identificar archivos y dependencias afectadas.\n3. Proponer una solución mínima.\n4. Mostrar un diff para revisión.\n5. Validar con pruebas y documentar resultados.\n\nNota: las modificaciones reales requieren conectar el repositorio y un agente de IA.';return 'He registrado tu solicitud en la sesión de demostración. Para convertirla en una tarea de programación real, el siguiente paso es conectar un proveedor de IA y una fuente de código autorizada.\n\nNo se ha ejecutado código, no se ha conectado a internet y no se han modificado archivos.'}
 async function send(){
  if(isSending)return;
+ if(agentController){toast('Espera a que termine el equipo multiagente');return;}
  const text=promptBox.value.trim();
  if(!text)return;
  isSending=true;
  const sendButton=$('#sendBtn');
+ const lockIds=['#newTask','#clearBtn','#projectSelect','#providerSelect','#modelSelect','#attachBtn'];
+ const locked=lockIds.map(selector=>$(selector)).filter(Boolean);
+ locked.forEach(control=>control.disabled=true);
+ const recent=$('#recent');
+ if(recent){recent.style.pointerEvents='none';recent.setAttribute('aria-disabled','true')}
  sendButton.disabled=true;
  sendButton.textContent='NEXUS respondiendo…';
  sendButton.setAttribute('aria-busy','true');
@@ -350,6 +380,8 @@ async function send(){
   sendButton.textContent='Enviar ↑';
   sendButton.removeAttribute('aria-busy');
   promptBox.removeAttribute('aria-disabled');
+  locked.forEach(control=>control.disabled=false);
+  if(recent){recent.style.pointerEvents='';recent.removeAttribute('aria-disabled')}
  }
 }
 function reset(){chat.innerHTML='';currentMessages=[];currentConversationId=null;welcome.classList.remove('hidden');promptBox.value='';renderRecent();logActivity('Nueva conversación');promptBox.focus()}
@@ -555,6 +587,7 @@ function setAgentProposalStatus(id,status){
  logActivity(status==='approved'?'Propuesta aprobada (sin aplicar)':'Propuesta descartada');
 }
 async function runAgentTeam(){
+ if(isSending){toast('Espera a que termine la respuesta del chat');return}
  const task=$('#agentTask').value.trim().slice(0,8000);
  if(!task){toast('Describe primero la tarea del equipo');$('#agentTask').focus();return}
  if(agentController){toast('Ya hay una ejecución en curso');return}
@@ -613,6 +646,7 @@ async function runAgentTeam(){
   collectAgentDiffs(results,task);$('#agentSendChat').classList.remove('hidden');
   toast('Equipo multiagente completado con hasta '+concurrency+' especialistas en paralelo');logActivity('Equipo multiagente completó la tarea');
  }catch(err){
+  if(!signal.aborted)agentController?.abort();
   runRecord.status=err.name==='AbortError'?'cancelled':'failed';runRecord.error=String(err.message||'Error desconocido').slice(0,1000);runRecord.finishedAt=new Date().toISOString();persist();
   if(err.name==='AbortError'){toast('Ejecución cancelada');logActivity('Equipo multiagente cancelado')}
   else{toast(err.message||'Falló el equipo multiagente');logActivity('Error en el equipo multiagente')}
@@ -688,7 +722,7 @@ async function loadPermissionPolicy(){
  }catch(err){panel.textContent=err.message||'No se pudo consultar la política de permisos.'}
 }
 $('#permissionsNav').onclick=()=>{$('#permissionPanel').scrollIntoView({behavior:'smooth',block:'center'});loadPermissionPolicy()};
-loadPermissionPolicy();
+loadPermissionPolicy();loadProviderStatus();
 
 </script>
 </body></html>
