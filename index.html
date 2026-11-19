@@ -249,6 +249,7 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 </div>
 <div id="toast" class="toast hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"}</script>
 <script>
@@ -696,6 +697,12 @@ async function readFile(f){
   }catch(error){return {status:error.message||'No se pudo preparar la imagen',preview:''}}
  }
  try{
+  if(ext==='docx'){
+   if(!window.mammoth)return {status:'No se pudo cargar el lector DOCX; revisa la conexión a internet',preview:''};
+   const result=await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()});
+   const text=result.value||'';
+   return {status:'Leído · documento Word'+(result.messages?.length?' · '+result.messages.length+' aviso(s)':''),preview:text.slice(0,30000)+(text.length>30000?'\\n[Contenido truncado a 30.000 caracteres]':'')};
+  }
   if(ext==='pdf'){
    if(!window.pdfjsLib) return {status:'No se pudo cargar el lector PDF; revisa la conexión a internet',preview:''};
    const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
