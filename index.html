@@ -256,7 +256,7 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const chat=$('#chatlog'), promptBox=$('#prompt'), welcome=$('#welcome'), fileList=$('#filelist'), activity=$('#activity');
 let isSending=false, files=[], taskCount=0, activities=[], currentMessages=[], currentConversationId=null, conversations=loadConversations(), projects=loadProjects(), memories=loadMemories(), currentProjectId='default';
-const modelOptions={openrouter:[['openrouter/free','Modelo gratuito disponible']],anthropic:[['claude-3-5-haiku-latest','Claude Haiku'],['claude-3-7-sonnet-latest','Claude Sonnet']],openai:[['gpt-4o-mini','GPT-4o mini'],['gpt-4o','GPT-4o']],gemini:[['gemini-2.0-flash','Gemini 2.0 Flash'],['gemini-2.5-flash','Gemini 2.5 Flash']]};
+const modelOptions={openrouter:[['openrouter/free','Modelo gratuito disponible']],anthropic:[['claude-haiku-5-5','Claude Haiku 5.5'],['claude-sonnet-5-5','Claude Sonnet 5.5']],openai:[['gpt-6-luna','GPT-6 Luna'],['gpt-6.2-sol','GPT-6.2 Sol']],gemini:[['gemini-3.5-flash-lite','Gemini 3.5 Flash-Lite'],['gemini-3.8-flash','Gemini 3.8 Flash']]};
 
 function loadProjects(){try{return JSON.parse(localStorage.getItem('nexus-projects')||'[{"id":"default","name":"Mi espacio"}]')}catch{return [{id:'default',name:'Mi espacio'}]}}
 function loadMemories(){try{return JSON.parse(localStorage.getItem('nexus-memories')||'[]')}catch{return []}}
