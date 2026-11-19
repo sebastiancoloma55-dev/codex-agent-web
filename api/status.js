@@ -18,6 +18,7 @@ export default function handler(req, res) {
       gemini: paidProvidersEnabled && Boolean(process.env.GEMINI_API_KEY)
     },
     imageGeneration: Boolean(paidProvidersEnabled && process.env.OPENAI_API_KEY && process.env.NEXUS_IMAGES_ENABLED === "true"),
-    mode: "open"
+    mode: "open",
+    commit: process.env.VERCEL_GIT_COMMIT_SHA || null
   });
 }
