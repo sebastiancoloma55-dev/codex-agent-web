@@ -1,0 +1,38 @@
+name: Validate NEXUS AI
+on:
+  push:
+    branches:
+      - feat/nexus-futuristic-open-chat
+  pull_request:
+    branches:
+      - main
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check serverless API syntax
+        run: |
+          for file in api/*.js; do
+            node --input-type=module --check < "$file"
+          done
+      - name: Extract and check inline browser scripts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>", html, flags=re.I)
+          inline = [s for s in scripts if s.strip()]
+          if not inline:
+              raise SystemExit("No inline browser scripts found")
+          for i, script in enumerate(inline, 1):
+              Path(f"/tmp/nexus-inline-{i}.js").write_text(script, encoding="utf-8")
+          print(f"Checking {len(inline)} inline script(s)")
+          PY
+          for file in /tmp/nexus-inline-*.js; do
+            node --check "$file"
+          done
