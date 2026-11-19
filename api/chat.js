@@ -1,3 +1,5 @@
+import { requireNexusUser } from "./_lib/require-user.js";
+
 const json = (res, status, body) => {
   res.setHeader("Cache-Control", "no-store");
   return res.status(status).json(body);
@@ -64,6 +66,8 @@ function normalizeImages(value) {
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  const user = await requireNexusUser(req, res);
+  if (!user) return;
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return json(res, 405, { error: "Método no permitido." });
