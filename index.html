@@ -332,8 +332,17 @@ async function send(){
  const row=addMessage('assistant','');
  const b=row.querySelector('.bubble');
  b.innerHTML='<span class="nexus-thinking"><span>NEXUS está pensando</span><span class="nexus-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span></span>';
- const memoryContext=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\n');
- const context=(memoryContext?'MEMORIA DEL USUARIO:\n'+memoryContext+'\n\n':'')+files.filter(f=>f.preview).map(f=>'ARCHIVO: '+f.name+'\n'+f.preview.slice(0,30000)).join('\n\n---\n\n');
+ const memoryContext=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\\n').slice(0,5000);
+ let contextBudget=25000;
+ const fileContext=[];
+ for(const file of files.filter(f=>f.preview)){
+  if(contextBudget<=0)break;
+  const part='ARCHIVO: '+file.name+'\\n'+file.preview;
+  const excerpt=part.slice(0,contextBudget);
+  fileContext.push(excerpt);
+  contextBudget-=excerpt.length;
+ }
+ const context=(memoryContext?'MEMORIA DEL USUARIO:\\n'+memoryContext+'\\n\\n':'')+fileContext.join('\\n\\n---\\n\\n');
  const images=files.filter(f=>f.imageData).map(f=>({name:f.name,data:f.imageData}));
  try{
   const res=await fetch('/api/chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context,history:currentMessages.slice(-10,-2).filter(m=>m.text).map(m=>({role:m.role,content:m.text})),provider:$('#providerSelect').value,model:$('#modelSelect').value,images,stream:true})});
@@ -744,9 +753,12 @@ async function readFile(f){
  }catch(e){return {status:'Error al leer el archivo',preview:''}}
 }
 async function addFiles(list){
- let added=0;
+ let added=0,totalSize=files.reduce((sum,file)=>sum+(Number(file.size)||0),0);
  for(const f of list){
   if(files.some(x=>x.name===f.name&&x.size===f.size)) continue;
+  if(files.length>=10){toast('Máximo 10 archivos por espacio de trabajo');break}
+  if(totalSize+f.size>30*1024*1024){toast('El total de archivos no puede superar 30 MB');break}
+  totalSize+=f.size;
   const item={name:f.name,size:f.size,type:f.type,status:'Leyendo archivo…',preview:''};
   files.push(item);added++;renderFiles();
   Object.assign(item,await readFile(f));
