@@ -33,10 +33,10 @@ function allowChatRequest(req) {
 }
 
 const MODELS = {
-  anthropic: ["claude-3-5-haiku-latest", "claude-3-7-sonnet-latest"],
-  openai: ["gpt-4o-mini", "gpt-4o"],
+  anthropic: ["claude-haiku-5-5", "claude-sonnet-5-5"],
+  openai: ["gpt-6-luna", "gpt-6.2-sol"],
   openrouter: ["openrouter/free"],
-  gemini: ["gemini-2.0-flash", "gemini-2.5-flash"]
+  gemini: ["gemini-3.5-flash-lite", "gemini-3.8-flash"]
 };
 
 function normalizeHistory(value) {
