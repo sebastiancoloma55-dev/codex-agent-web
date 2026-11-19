@@ -1,5 +1,3 @@
-import { requireSession } from "./auth.js";
-
 const json = (res, status, body) => {
   res.setHeader("Cache-Control", "no-store");
   return res.status(status).json(body);
@@ -48,7 +46,6 @@ function normalizeHistory(value) {
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  if (!requireSession(req, res)) return;
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return json(res, 405, { error: "Método no permitido." });
