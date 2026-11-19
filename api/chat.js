@@ -140,7 +140,7 @@ export default async function handler(req, res) {
             res.write(Buffer.from(value));
           }
         } catch (streamError) {
-          if (!res.writableEnded) res.write("data: " + JSON.stringify({ error: "La conexión con el proveedor se interrumpió. Inténtalo nuevamente." }) + "\\n\\n");
+          if (!res.writableEnded) res.write("data: " + JSON.stringify({ error: "La conexión con el proveedor se interrumpió. Inténtalo nuevamente." }) + "\n\n");
         } finally { if (!res.writableEnded) res.end(); }
         return;
       }
