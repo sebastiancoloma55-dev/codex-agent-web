@@ -42,6 +42,7 @@ jobs:
     needs: syntax
     runs-on: ubuntu-24.04
     steps:
+      - uses: actions/checkout@v4
       - name: Wait for Vercel Preview and verify API health
         shell: bash
         run: |
