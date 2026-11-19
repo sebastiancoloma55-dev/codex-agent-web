@@ -191,7 +191,7 @@ h1 span{background:linear-gradient(95deg,#a99aff 8%,#57e3ed 90%);-webkit-backgro
 </div></div>
 </main>
 <aside class="inspector">
-<div class="panelhead"><span>Archivos y contexto</span><span class="status">MODO ABIERTO</span></div>
+<div class="panelhead"><span>Archivos y contexto</span><span class="status">SESIÓN ASISTENCIA</span></div>
 <div class="panelhead"><span>Repositorio GitHub</span><span class="pill">SOLO LECTURA</span></div>
 <div class="github-explorer">
  <input id="githubRepo" value="sebastiancoloma55-dev/codex-agent-web" aria-label="Repositorio público" placeholder="usuario/repositorio">
@@ -307,9 +307,9 @@ async function loadProviderStatus(){
   }
   updateModels();
   const ready=Object.keys(data.providers).filter(key=>data.providers[key]);
-  status.textContent=ready.length?'Proveedor listo: '+ready.map(x=>x==='openrouter'?'OpenRouter':x).join(', ')+'. Modo abierto: no compartas datos confidenciales.':'No hay proveedores con clave configurada en este entorno. Modo abierto: no compartas datos confidenciales.';
+  status.textContent=ready.length?'Proveedor listo: '+ready.map(x=>x==='openrouter'?'OpenRouter':x).join(', ')+'. Acceso protegido por Asistencia Doctor Simi.':'No hay proveedores con clave configurada en este entorno. Tu acceso sigue protegido por Asistencia.';
  }catch(error){
-  status.textContent='No se pudo comprobar el estado de los proveedores. El servidor validará la clave al enviar.';
+  status.textContent='No se pudo comprobar el estado de los proveedores. Tu sesión sigue protegida.';
  }
 }
 renderProjects();renderMemories();renderRecent();$('#projectSelect').onchange=e=>{currentProjectId=e.target.value;chat.innerHTML='';currentMessages=[];currentConversationId=null;welcome.classList.remove('hidden');renderRecent();renderMemories();assignedRegistryProfiles=loadAssignedRegistry();renderAgentRegistry($('#agentRegistrySearch').value)};$('#newProject').onclick=createProject;$('#addMemory').onclick=addMemory;$('#exportData').onclick=exportWorkspace;
