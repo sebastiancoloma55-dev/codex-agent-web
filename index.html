@@ -701,7 +701,7 @@ async function readFile(f){
    if(!window.mammoth)return {status:'No se pudo cargar el lector DOCX; revisa la conexión a internet',preview:''};
    const result=await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()});
    const text=result.value||'';
-   return {status:'Leído · documento Word'+(result.messages?.length?' · '+result.messages.length+' aviso(s)':''),preview:text.slice(0,30000)+(text.length>30000?'\\n[Contenido truncado a 30.000 caracteres]':'')};
+   return {status:'Leído · documento Word'+(result.messages?.length?' · '+result.messages.length+' aviso(s)':''),preview:text.slice(0,30000)+(text.length>30000?'\n[Contenido truncado a 30.000 caracteres]':'')};
   }
   if(ext==='pdf'){
    if(!window.pdfjsLib) return {status:'No se pudo cargar el lector PDF; revisa la conexión a internet',preview:''};
