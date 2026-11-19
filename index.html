@@ -332,17 +332,17 @@ async function send(){
  const row=addMessage('assistant','');
  const b=row.querySelector('.bubble');
  b.innerHTML='<span class="nexus-thinking"><span>NEXUS está pensando</span><span class="nexus-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span></span>';
- const memoryContext=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\\n').slice(0,5000);
+ const memoryContext=memories.filter(m=>m.projectId===currentProjectId||m.projectId==='all').map(m=>'- '+m.text).join('\n').slice(0,5000);
  let contextBudget=25000;
  const fileContext=[];
  for(const file of files.filter(f=>f.preview)){
   if(contextBudget<=0)break;
-  const part='ARCHIVO: '+file.name+'\\n'+file.preview;
+  const part='ARCHIVO: '+file.name+'\n'+file.preview;
   const excerpt=part.slice(0,contextBudget);
   fileContext.push(excerpt);
   contextBudget-=excerpt.length;
  }
- const context=(memoryContext?'MEMORIA DEL USUARIO:\\n'+memoryContext+'\\n\\n':'')+fileContext.join('\\n\\n---\\n\\n');
+ const context=(memoryContext?'MEMORIA DEL USUARIO:\n'+memoryContext+'\n\n':'')+fileContext.join('\n\n---\n\n');
  const images=files.filter(f=>f.imageData).map(f=>({name:f.name,data:f.imageData}));
  try{
   const res=await fetch('/api/chat',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,context,history:currentMessages.slice(-10,-2).filter(m=>m.text).map(m=>({role:m.role,content:m.text})),provider:$('#providerSelect').value,model:$('#modelSelect').value,images,stream:true})});
